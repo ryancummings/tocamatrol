@@ -44,15 +44,22 @@ private func tap(_ usage: UInt8, _ modifiers: KeyModifiers = [], after delay: In
 
     @Test func aRecordingBecomesTextShortcutsAndPauses() {
         // "Ok", a second's wait, then Ctrl+S.
-        let steps = [MacroStep(.press, shift)] + tap(0x12, after: 120) + [MacroStep(.release, shift, after: 30)]
-            + tap(0x0E, after: 150)
-            + [MacroStep(.press, ctrl, after: 1000)] + tap(0x16, after: 90) + [MacroStep(.release, ctrl, after: 60)]
+        var steps: [MacroStep] = [MacroStep(.press, shift)]
+        steps += tap(0x12, after: 120)
+        steps.append(MacroStep(.release, shift, after: 30))
+        steps += tap(0x0E, after: 150)
+        steps.append(MacroStep(.press, ctrl, after: 1000))
+        steps += tap(0x16, after: 90)
+        steps.append(MacroStep(.release, ctrl, after: 60))
 
         #expect(MacroAction.actions(from: steps) == [.text("Ok"), .pause(1000), .shortcut(KeyChord(0x16, .leftControl))])
     }
 
     @Test func shortWaitsInsideTextAreTypingSpeedNotPauses() {
-        let steps = tap(0x04) + tap(0x05, after: 600) + tap(0x2C, after: 1200) + tap(0x06, after: 100)
+        var steps: [MacroStep] = tap(0x04)
+        steps += tap(0x05, after: 600)
+        steps += tap(0x2C, after: 1200)
+        steps += tap(0x06, after: 100)
 
         #expect(MacroAction.actions(from: steps) == [.text("ab"), .pause(1200), .text(" c")])
     }
