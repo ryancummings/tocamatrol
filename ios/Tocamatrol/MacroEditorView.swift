@@ -19,6 +19,7 @@ struct MacroEditorView: View {
     @State private var id = UUID()
     @State private var name = ""
     @State private var speed = MacroSpeed.normal
+    @State private var isSensitive = false
     @State private var steps: [EditableStep] = []
     @State private var loaded = false
     @State private var editing: StepEdit?
@@ -56,6 +57,20 @@ struct MacroEditorView: View {
                 SectionLabel(text: "Speed")
             } footer: {
                 Text(speedFooter).foregroundStyle(Theme.dim)
+            }
+            .consoleRows()
+
+            Section {
+                Toggle(isOn: $isSensitive) {
+                    Label("Sensitive macro", systemImage: "lock.fill")
+                        .foregroundStyle(Theme.text)
+                }
+                .accessibilityIdentifier("sensitiveMacroToggle")
+            } header: {
+                SectionLabel(text: "Privacy")
+            } footer: {
+                Text("Obscures output as \(MacroDescription.maskedText) in the Last Sent panel, macro lists, and step preview.")
+                    .foregroundStyle(Theme.dim)
             }
             .consoleRows()
 
@@ -123,7 +138,7 @@ struct MacroEditorView: View {
                 .frame(width: ScreenMetrics.isPad ? 150 : 112, height: ScreenMetrics.isPad ? 160 : 120)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
-                Text(steps.isEmpty ? "No steps yet" : MacroDescription.text(macro.actions))
+                Text(steps.isEmpty ? "No steps yet" : MacroDescription.summary(for: macro))
                     .font(.caption.monospaced())
                     .foregroundStyle(Theme.dim)
                     .lineLimit(3)
@@ -160,7 +175,7 @@ struct MacroEditorView: View {
                                 .font(.system(size: 18))
                                 .foregroundStyle(isPause ? Theme.amber : Theme.hairline)
                         }
-                        StepRow(number: index + 1, action: step.action, showsChevron: !selecting)
+                        StepRow(number: index + 1, action: step.action, showsChevron: !selecting, isSensitive: isSensitive)
                             .opacity(selecting && !isPause ? 0.4 : 1)
                     }
                 }
@@ -265,7 +280,7 @@ struct MacroEditorView: View {
     }
 
     private var draft: Macro {
-        Macro(id: id, name: name, speed: speed, actions: steps.map(\.action))
+        Macro(id: id, name: name, speed: speed, isSensitive: isSensitive, actions: steps.map(\.action))
     }
 
     private var speedFooter: String {
@@ -288,6 +303,7 @@ struct MacroEditorView: View {
             id = original.id
             name = original.name
             speed = original.speed
+            isSensitive = original.isSensitive
             steps = original.actions.map { EditableStep(action: $0) }
         } else {
             name = store.nextMacroName
@@ -385,6 +401,7 @@ private struct StepRow: View {
     let number: Int
     let action: MacroAction
     var showsChevron = true
+    var isSensitive = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -407,7 +424,8 @@ private struct StepRow: View {
                     .foregroundStyle(Theme.muted)
                 summary
                 if case let .text(text) = action, !USKeyboard.untypable(in: text).isEmpty {
-                    Label("Leaves out \(String(USKeyboard.untypable(in: text)))", systemImage: "exclamationmark.triangle")
+                    Label(isSensitive ? "Includes characters US keyboards skip" : "Leaves out \(String(USKeyboard.untypable(in: text)))",
+                          systemImage: "exclamationmark.triangle")
                         .font(.caption)
                         .foregroundStyle(Theme.highlightLabel)
                 }
@@ -423,7 +441,7 @@ private struct StepRow: View {
     @ViewBuilder private var summary: some View {
         switch action {
         case let .text(text):
-            Text(text.isEmpty ? "Nothing to type" : MacroDescription.text(action))
+            Text(text.isEmpty ? "Nothing to type" : isSensitive ? MacroDescription.maskedText : MacroDescription.text(action))
                 .font(.body.monospaced().weight(.semibold))
                 .foregroundStyle(text.isEmpty ? Theme.dim : Theme.highlightLabel)
                 .lineLimit(3)
@@ -432,7 +450,10 @@ private struct StepRow: View {
         case let .pause(ms):
             Text(String(format: "%.2f s", Double(ms) / 1000)).font(.body.monospaced().weight(.semibold)).foregroundStyle(Theme.text)
         case let .recorded(steps):
-            Text(MacroDescription.text(steps)).font(.body.monospaced().weight(.semibold)).foregroundStyle(Theme.text).lineLimit(2)
+            Text(isSensitive ? MacroDescription.maskedText : MacroDescription.text(steps))
+                .font(.body.monospaced().weight(.semibold))
+                .foregroundStyle(Theme.text)
+                .lineLimit(2)
         }
     }
 

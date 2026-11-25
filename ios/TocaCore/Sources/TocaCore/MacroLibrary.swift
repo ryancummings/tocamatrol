@@ -6,18 +6,20 @@ public struct Macro: Identifiable, Hashable, Sendable {
     public var id: UUID
     public var name: String
     public var speed: MacroSpeed
+    public var isSensitive: Bool
     public var actions: [MacroAction]
 
-    public init(id: UUID = UUID(), name: String, speed: MacroSpeed = .normal, actions: [MacroAction]) {
+    public init(id: UUID = UUID(), name: String, speed: MacroSpeed = .normal, isSensitive: Bool = false, actions: [MacroAction]) {
         self.id = id
         self.name = name
         self.speed = speed
+        self.isSensitive = isSensitive
         self.actions = actions
     }
 
     /// A macro from recorded key changes, put as steps where they allow it.
-    public init(id: UUID = UUID(), name: String, speed: MacroSpeed = .normal, steps: [MacroStep]) {
-        self.init(id: id, name: name, speed: speed, actions: MacroAction.actions(from: steps))
+    public init(id: UUID = UUID(), name: String, speed: MacroSpeed = .normal, isSensitive: Bool = false, steps: [MacroStep]) {
+        self.init(id: id, name: name, speed: speed, isSensitive: isSensitive, actions: MacroAction.actions(from: steps))
     }
 
     /// The key changes it plays.
@@ -487,10 +489,11 @@ extension MacroStep: Codable {
 
 extension MacroStep.Action: Codable {}
 
-/// Saved as {"id", "name", "speed", "actions"}. Before version 4 a macro saved recorded "steps"
-/// instead, which load as steps where they can. Version 4's "appearance" is read by the library.
+/// Saved as {"id", "name", "speed", "isSensitive", "actions"}. Before version 4 a macro saved
+/// recorded "steps" instead, which load as steps where they can. Version 4's "appearance" is read
+/// by the library.
 extension Macro: Codable {
-    private enum CodingKeys: String, CodingKey { case id, name, speed, actions, steps }
+    private enum CodingKeys: String, CodingKey { case id, name, speed, isSensitive, actions, steps }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -499,6 +502,7 @@ extension Macro: Codable {
         self.init(id: try container.decode(UUID.self, forKey: .id),
                   name: try container.decode(String.self, forKey: .name),
                   speed: try container.decodeIfPresent(MacroSpeed.self, forKey: .speed) ?? .normal,
+                  isSensitive: try container.decodeIfPresent(Bool.self, forKey: .isSensitive) ?? false,
                   actions: actions)
     }
 
@@ -507,6 +511,7 @@ extension Macro: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
         try container.encode(speed, forKey: .speed)
+        if isSensitive { try container.encode(true, forKey: .isSensitive) }
         try container.encode(actions, forKey: .actions)
     }
 }

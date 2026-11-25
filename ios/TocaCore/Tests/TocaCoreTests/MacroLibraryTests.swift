@@ -266,4 +266,35 @@ private let copy = Macro(id: copyID, name: "Copy", speed: .double, steps: [
         #expect(existing.pages[0].id != existing.pages[1].id)
         #expect(existing.pages[1].buttons[0].macro == existing.macros[1].id)
     }
+
+    @Test func sensitiveMacrosRoundTripDuplicateAndMergeSafely() throws {
+        let secret = Macro(id: copyID, name: "Vault Login", speed: .double, isSensitive: true,
+                           actions: [.text("hunter2"), .shortcut(KeyChord(0x28))])
+        var page = MacroPage(id: pageID, title: "Logins")
+        page.assign(copyID, at: Cell(0, 0))
+        var library = MacroLibrary(macros: [secret], pages: [page])
+
+        let decoded = try MacroLibrary(data: library.encoded())
+        #expect(decoded.macros.first?.isSensitive == true)
+
+        let imported = try MacroLibrary.importJSON(library.exportJSON())
+        #expect(imported.macros.first?.isSensitive == true)
+
+        let duplicated = library.duplicateMacro(copyID)
+        #expect(duplicated?.isSensitive == true)
+
+        var merged = MacroLibrary()
+        _ = merged.merge(imported)
+        #expect(merged.macros.first?.isSensitive == true)
+
+        // Legacy JSON without "isSensitive" decodes as false.
+        let legacyJSON = """
+            {"version": 6,
+             "macros": [{"id": "11111111-2222-3333-4444-555555555555", "name": "Copy", "speed": "normal",
+                         "actions": [{"type": "text", "text": "hello"}]}],
+             "pages": []}
+            """
+        let legacyDecoded = try MacroLibrary(data: Data(legacyJSON.utf8))
+        #expect(legacyDecoded.macros.first?.isSensitive == false)
+    }
 }

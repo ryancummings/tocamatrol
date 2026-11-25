@@ -258,6 +258,29 @@ enum MacroDescription {
             ?? String(format: "key %02X", usage)
     }
 
+    /// Shown instead of literal steps when a macro is marked sensitive.
+    static let maskedText = "*********"
+
+    /// A macro's steps in words, masked as `*********` when sensitive.
+    static func summary(for macro: Macro) -> String {
+        macro.isSensitive ? maskedText : text(macro.actions)
+    }
+
+    /// Summary shown in the bottom Last Sent readout. Sensitive macros always show `*********`,
+    /// and non-sensitive macros never echo raw typed text strings directly on screen.
+    static func readoutDetail(for macro: Macro) -> String {
+        guard !macro.isSensitive else { return maskedText }
+        let parts = macro.actions.map { action -> String in
+            switch action {
+            case .text: return "Typed text"
+            case let .shortcut(chord): return chordName(chord)
+            case let .pause(ms): return pause(ms)
+            case .recorded: return "Recorded keys"
+            }
+        }
+        return parts.isEmpty ? "Sent" : parts.joined(separator: " · ")
+    }
+
     /// A macro's steps in words: text in quotes (⏎ for Enter), shortcuts, and pauses.
     static func text(_ actions: [MacroAction]) -> String {
         let parts = actions.map(text)

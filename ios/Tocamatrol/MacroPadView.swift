@@ -9,6 +9,8 @@ struct MacroPadView: View {
     @AppStorage(SettingsKey.macroPage) private var pageID = ""
     @StateObject private var readout = PadReadout()
     @State private var editing: MacrosView.Start?
+    @State private var addingPage = false
+    @State private var draftPageName = ""
 
     var body: some View {
         Group {
@@ -27,6 +29,20 @@ struct MacroPadView: View {
         }
         .environmentObject(readout)
         .sheet(item: $editing) { start in MacrosView(start: start) }
+        .alert("New Page", isPresented: $addingPage) {
+            TextField("Page name", text: $draftPageName)
+                .textInputAutocapitalization(.words)
+            Button("Cancel", role: .cancel) {}
+            Button("Add") {
+                let trimmed = draftPageName.trimmingCharacters(in: .whitespacesAndNewlines)
+                let newPage = MacroPage(title: trimmed.isEmpty ? store.nextPageName : trimmed,
+                                        shape: .deviceDefault)
+                store.library.pages.append(newPage)
+                pageID = newPage.id.uuidString
+            }
+        } message: {
+            Text("Create a new macro page on your pad.")
+        }
     }
 
     private func page(in pages: [MacroPage]) -> MacroPage {
@@ -34,15 +50,26 @@ struct MacroPadView: View {
     }
 
     private func pageBar(_ pages: [MacroPage], current: MacroPage) -> some View {
-        HStack(spacing: 8) {
-            PageTabs(pages: pages.map { ($0.id.uuidString, $0.title) },
-                     selection: Binding(get: { current.id.uuidString }, set: { pageID = $0 }))
+        let height: CGFloat = ScreenMetrics.isPad ? 40 : 36
+        return HStack(spacing: 8) {
+            PageTabs(
+                pages: pages.map { ($0.id.uuidString, $0.title) },
+                selection: Binding(get: { current.id.uuidString }, set: { pageID = $0 }),
+                onAddPage: {
+                    draftPageName = store.nextPageName
+                    addingPage = true
+                }
+            )
             Button {
                 editing = .page(current.id)
             } label: {
-                Image(systemName: "square.and.pencil")
+                HStack(spacing: 5) {
+                    Image(systemName: "square.and.pencil")
+                    Text("Edit")
+                }
+                .padding(.horizontal, 8)
             }
-            .buttonStyle(ConsoleTileButtonStyle(size: ScreenMetrics.isPad ? 40 : 36))
+            .buttonStyle(ConsoleTileButtonStyle(size: height))
             .accessibilityLabel("Pages and macros")
         }
     }
@@ -84,38 +111,48 @@ private struct EmptyPadView: View {
     }
 }
 
-/// The page tabs: one strip that scrolls sideways when the pages do not fit.
+/// The page tabs: one strip that scrolls sideways when the pages do not fit, with an inline `+`
+/// button to add another page right beside the existing ones.
 private struct PageTabs: View {
     let pages: [(id: String, title: String)]
     @Binding var selection: String
+    let onAddPage: () -> Void
 
     var body: some View {
         let height: CGFloat = ScreenMetrics.isPad ? 40 : 36
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                ConsoleSegmented(options: pages.map(\.id), selection: $selection, height: height) { id in
-                    Text(pages.first { $0.id == id }?.title ?? "").id(id)
+                HStack(spacing: 8) {
+                    ConsoleSegmented(options: pages.map(\.id), selection: $selection, height: height) { id in
+                        Text(pages.first { $0.id == id }?.title ?? "")
+                            .fixedSize(horizontal: true, vertical: false)
+                            .id(id)
+                    }
+                    Button(action: onAddPage) {
+                        Image(systemName: "plus")
+                            .font(.system(size: height > 36 ? 15 : 14, weight: .black))
+                    }
+                    .buttonStyle(ConsoleTileButtonStyle(size: height))
+                    .accessibilityLabel("Add page")
+                    .accessibilityIdentifier("addPageButton")
                 }
+                .padding(.leading, 1)
+                .padding(.trailing, 4)
+                .padding(.vertical, 2)
             }
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-            .frame(height: height + 4)
-            // Fade the ends, so a tab cut by the edge reads as scrolled, not broken.
-            .mask {
-                HStack(spacing: 0) {
-                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: 10)
-                    Color.black
-                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 10)
-                }
-            }
+            .frame(height: height + 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .onAppear { proxy.scrollTo(selection, anchor: .center) }
-            .onChange(of: selection) { _, id in withAnimation { proxy.scrollTo(id, anchor: .center) } }
+            .onChange(of: selection) { _, id in
+                guard pages.count > 2 else { return }
+                withAnimation { proxy.scrollTo(id, anchor: .center) }
+            }
         }
     }
 }
 
-/// Sizes a page's grid so keys stay proportional across grid densities, and allocates remaining
-/// height below the grid to the readout panel.
+/// Sizes a page's grid so keys stay proportional across grid densities, always reserving
+/// dedicated space below for the bottom readout and link panel so keys never crowd it.
 struct PadArea<Grid: View>: View {
     let columns: Int
     let rows: Int
@@ -123,7 +160,8 @@ struct PadArea<Grid: View>: View {
 
     /// Tallest key aspect ratio (height / width).
     static var maxAspect: CGFloat { 1.15 }
-    private static var readoutMinimum: CGFloat { 70 }
+    static var readoutHeight: CGFloat { ScreenMetrics.isPad ? 114 : 104 }
+    static var readoutGap: CGFloat { 14 }
 
     static func gridSize(for shape: GridShape, in available: CGSize) -> CGSize {
         let spacing = Theme.padSpacing
@@ -138,20 +176,22 @@ struct PadArea<Grid: View>: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let gridSize = Self.gridSize(for: GridShape(columns: columns, rows: rows), in: geometry.size)
-            let left = geometry.size.height - gridSize.height - 12
-            VStack(spacing: 12) {
+            let gridAvailable = CGSize(
+                width: geometry.size.width,
+                height: max(120, geometry.size.height - Self.readoutHeight - Self.readoutGap)
+            )
+            let gridSize = Self.gridSize(for: GridShape(columns: columns, rows: rows), in: gridAvailable)
+            VStack(spacing: 0) {
                 grid()
                     .frame(height: gridSize.height)
                     .background {
                         Color.clear
-                            .onAppear { PadShape.recordCanvas(geometry.size) }
-                            .onChange(of: geometry.size) { _, size in PadShape.recordCanvas(size) }
+                            .onAppear { PadShape.recordCanvas(gridAvailable) }
+                            .onChange(of: gridAvailable) { _, size in PadShape.recordCanvas(size) }
                     }
-                if left >= Self.readoutMinimum {
-                    ReadoutPanel().frame(height: min(left, ScreenMetrics.isPad ? 140 : 120))
-                }
-                Spacer(minLength: 0)
+                Spacer(minLength: Self.readoutGap)
+                ReadoutPanel()
+                    .frame(height: Self.readoutHeight)
             }
         }
     }
@@ -163,13 +203,14 @@ final class PadReadout: ObservableObject {
         let title: String
         let detail: String?
         let sent: Bool
+        let isSensitive: Bool
         let at: Date
     }
 
     @Published private(set) var last: Entry?
 
-    func show(_ title: String, detail: String?, sent: Bool) {
-        last = Entry(title: title, detail: detail, sent: sent, at: Date())
+    func show(_ title: String, detail: String?, sent: Bool, isSensitive: Bool = false) {
+        last = Entry(title: title, detail: detail, sent: sent, isSensitive: isSensitive, at: Date())
     }
 }
 
@@ -181,33 +222,41 @@ private struct ReadoutPanel: View {
     var body: some View {
         let failed = readout.last?.sent == false
         HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 5) {
                 SectionLabel(
                     text: failed ? "Not sent" : "Last sent",
                     color: failed ? Theme.red : Theme.popYellow,
                     foreground: failed ? .white : Theme.popInk
                 )
                 if let last = readout.last {
-                    Text(last.title)
-                        .font(.system(size: ScreenMetrics.isPad ? 26 : 20, weight: .black, design: .rounded))
-                        .foregroundStyle(last.sent ? Theme.highlightLabel : Theme.red)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    Text(last.sent ? (last.detail ?? " ") : notSentMessage)
+                    HStack(spacing: 6) {
+                        if last.isSensitive {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: ScreenMetrics.isPad ? 16 : 14, weight: .bold))
+                                .foregroundStyle(last.sent ? Theme.highlightLabel : Theme.red)
+                        }
+                        Text(last.title)
+                            .font(.system(size: ScreenMetrics.isPad ? 24 : 19, weight: .black, design: .rounded))
+                            .foregroundStyle(last.sent ? Theme.highlightLabel : Theme.red)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                    }
+                    Text(last.sent ? (last.isSensitive ? MacroDescription.maskedText : (last.detail ?? "Sent")) : notSentMessage)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                 } else {
                     Text("Ready")
-                        .font(.system(size: ScreenMetrics.isPad ? 26 : 20, weight: .black, design: .rounded))
+                        .font(.system(size: ScreenMetrics.isPad ? 24 : 19, weight: .black, design: .rounded))
                         .foregroundStyle(Theme.text)
                     Text(link.state == .noDongle ? "Tap Dongle above to pair an ESP32-S3 dongle." : "Macros fire on touch.")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                         .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
                 }
             }
             Spacer(minLength: 0)
-            VStack(alignment: .trailing, spacing: 6) {
+            VStack(alignment: .trailing, spacing: 5) {
                 SectionLabel(text: "Link", color: Theme.raised, foreground: Theme.text)
                 HStack(spacing: 6) {
                     Circle()
@@ -225,7 +274,8 @@ private struct ReadoutPanel: View {
                 }
             }
         }
-        .padding(14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .comicPanel(fill: Theme.surface, cornerRadius: 12, borderWidth: 2, shadowOffset: 3)
         .accessibilityElement(children: .combine)
@@ -332,7 +382,8 @@ private struct MacroKey: View {
                     controller.stopMacro()
                 } else {
                     controller.play(macro)
-                    readout.show(macro.name, detail: MacroDescription.text(macro.actions), sent: link.state == .ready)
+                    readout.show(macro.name, detail: MacroDescription.readoutDetail(for: macro),
+                                 sent: link.state == .ready, isSensitive: macro.isSensitive)
                 }
             }, onUp: { pressed = false })
         }

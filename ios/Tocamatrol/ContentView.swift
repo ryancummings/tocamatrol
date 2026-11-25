@@ -99,8 +99,16 @@ private struct TopBar: View {
             Spacer(minLength: 4)
             ConsoleSegmented(options: InputMode.allCases, selection: $mode) { mode in
                 switch mode {
-                case .keys: Image(systemName: "square.grid.3x3.fill").accessibilityLabel("Macro pad")
-                case .trackpad: Image(systemName: "rectangle.and.hand.point.up.left.fill").accessibilityLabel("Trackpad")
+                case .keys:
+                    Label(ScreenMetrics.isPad ? "Macros" : "Keys", systemImage: "square.grid.3x3.fill")
+                        .labelStyle(.titleAndIcon)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .accessibilityLabel("Macro pad")
+                case .trackpad:
+                    Label(ScreenMetrics.isPad ? "Trackpad" : "Pad", systemImage: "rectangle.and.hand.point.up.left.fill")
+                        .labelStyle(.titleAndIcon)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .accessibilityLabel("Trackpad")
                 }
             }
             Button {

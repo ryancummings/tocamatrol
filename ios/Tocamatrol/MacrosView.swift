@@ -186,14 +186,19 @@ struct MacroRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            HStack {
+            HStack(spacing: 6) {
+                if macro.isSensitive {
+                    Image(systemName: "lock.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Theme.muted)
+                }
                 Text(macro.name)
                     .fontWeight(.semibold)
                     .foregroundStyle(Theme.text)
                 Spacer()
                 if macro.speed != .normal { MonoTag(text: macro.speed.label) }
             }
-            Text(MacroDescription.text(macro.actions))
+            Text(MacroDescription.summary(for: macro))
                 .font(.caption.monospaced())
                 .foregroundStyle(Theme.muted)
                 .lineLimit(1)
@@ -658,10 +663,17 @@ private struct Inspector: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(button == nil ? "Empty cell" : macro?.name ?? "Deleted macro")
-                        .font(.system(.headline, design: .rounded, weight: .bold))
-                        .foregroundStyle(Theme.text)
-                    Text(button == nil ? "No button here yet." : macro.map { MacroDescription.text($0.actions) } ?? "")
+                    HStack(spacing: 6) {
+                        if macro?.isSensitive == true {
+                            Image(systemName: "lock.fill")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Theme.muted)
+                        }
+                        Text(button == nil ? "Empty cell" : macro?.name ?? "Deleted macro")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundStyle(Theme.text)
+                    }
+                    Text(button == nil ? "No button here yet." : macro.map { MacroDescription.summary(for: $0) } ?? "")
                         .font(.caption.monospaced())
                         .foregroundStyle(Theme.muted)
                         .lineLimit(2)
