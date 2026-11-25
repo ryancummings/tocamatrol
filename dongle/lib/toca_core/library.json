@@ -1,0 +1,7 @@
+{
+  "name": "toca_core",
+  "version": "0.1.0",
+  "description": "Hardware-free Tocamatrol dongle logic: packet decoding and HID report planning.",
+  "frameworks": "*",
+  "platforms": "*"
+}

@@ -1,0 +1,1 @@
+macro pad,trackpad,touchpad,keyboard,mouse,BLE,ESP32,USB HID,shortcuts,wireless,open source

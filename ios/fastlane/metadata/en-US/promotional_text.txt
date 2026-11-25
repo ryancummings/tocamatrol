@@ -1,0 +1,1 @@
+Turn your iPhone or iPad into a customizable wireless macro pad and trackpad for any computer via a driver-free ESP32-S3 USB dongle.

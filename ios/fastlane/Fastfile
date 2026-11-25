@@ -1,0 +1,236 @@
+# Tocamatrol release and screenshot lanes. Run from ios/ on a Mac with Xcode installed.
+# Signing requires a GUI keychain session (SSH sessions without an unlocked keychain will fail).
+# Nothing here submits automatically for App Store review.
+require "fileutils"
+require "shellwords"
+
+# Non-interactive shells have no locale; fastlane's Ruby then fails on non-ASCII bytes.
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = Encoding::UTF_8
+ENV["LANG"] ||= "en_US.UTF-8"
+ENV["LC_ALL"] ||= "en_US.UTF-8"
+
+skill = File.expand_path(ENV["MOBILE_STORE_RELEASE_SKILL"] || "~/.agents/skills/mobile-store-release")
+release_helpers = File.join(skill, "scripts", "fastlane", "release_helpers")
+screenshot_sync_helper = File.join(skill, "scripts", "fastlane", "screenshot_sync")
+require release_helpers if File.exist?("#{release_helpers}.rb")
+require screenshot_sync_helper if File.exist?("#{screenshot_sync_helper}.rb")
+
+APP_BUNDLE_ID = "com.OneRadStudio.tocamatrol"
+FASTLANE_DIR = [Dir.pwd, File.join(Dir.pwd, "fastlane"), File.expand_path(__dir__)]
+               .map { |d| File.expand_path(d) }
+               .find { |d| File.exist?(File.join(d, "Fastfile")) } || File.expand_path(__dir__)
+IOS_DIR = File.dirname(FASTLANE_DIR)
+REPO_DIR = File.dirname(IOS_DIR)
+BUILD_DIR = File.join(IOS_DIR, "build")
+IPA = File.join(BUILD_DIR, "Tocamatrol.ipa")
+METADATA_DIR = File.join(FASTLANE_DIR, "metadata")
+DELIVER_DIR = File.join(FASTLANE_DIR, "deliver_screenshots")
+RAW_SHOTS_DIR = File.join(FASTLANE_DIR, "screenshots", "en-US")
+
+def resolve_team_id(ios_dir)
+  env_team = ENV["APPLE_TEAM_ID"].to_s.strip
+  return env_team unless env_team.empty?
+
+  local_config = File.join(ios_dir, "LocalSigning.xcconfig")
+  return "" unless File.exist?(local_config)
+
+  match = File.read(local_config).match(/^\s*DEVELOPMENT_TEAM\s*=\s*([A-Z0-9]+)/)
+  match ? match[1] : ""
+end
+
+TEAM_ID = resolve_team_id(IOS_DIR)
+
+ASC_KEY_ID = ENV["ASC_API_KEY_ID"].to_s
+ASC_ISSUER = ENV["ASC_ISSUER_ID"].to_s
+ASC_KEY_PATH = File.expand_path(ENV["ASC_API_KEY_PATH"] || "~/.appstoreconnect/AuthKey_#{ASC_KEY_ID}.p8")
+
+ASC_RELEASE = if defined?(OneRadStoreRelease::AppStoreConnect)
+                OneRadStoreRelease::AppStoreConnect.new(
+                  app_identifier: APP_BUNDLE_ID,
+                  metadata_path: METADATA_DIR
+                )
+              end
+
+def require_asc_release!
+  return ASC_RELEASE if ASC_RELEASE
+
+  UI.user_error!(
+    "App Store Connect release helpers not loaded. Set MOBILE_STORE_RELEASE_SKILL " \
+    "to your mobile-store-release skill path."
+  )
+end
+
+def new_screenshot_sync
+  require_asc_release!.login!
+  unless defined?(ScreenshotSync)
+    UI.user_error!(
+      "ScreenshotSync helper not loaded. Set MOBILE_STORE_RELEASE_SKILL " \
+      "to your mobile-store-release skill path."
+    )
+  end
+  ScreenshotSync.new(app_identifier: APP_BUNDLE_ID, screenshots_path: DELIVER_DIR)
+end
+
+# The screenshot simulators, as in fastlane/Snapfile. Keep the two lists in step.
+SHOT_RUNTIME = ENV["SHOT_RUNTIME"] || "com.apple.CoreSimulator.SimRuntime.iOS-27-2"
+SHOT_DEVICES = {
+  "Tocamatrol-Shots-iPhone17e" => "com.apple.CoreSimulator.SimDeviceType.iPhone-17e",
+  "Tocamatrol-Shots-iPhone17ProMax" => "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max",
+  "Tocamatrol-Shots-iPadmini" => "com.apple.CoreSimulator.SimDeviceType.iPad-mini-A20-Pro",
+  "Tocamatrol-Shots-iPadPro13" => "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB"
+}.freeze
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build GitHub main with the next build number and upload it to TestFlight. " \
+       "Pass branch:true to build the current checkout instead of main."
+  lane :beta do |options|
+    asc = require_asc_release!
+    key = asc.api_key
+    UI.user_error!("App Store Connect API key not configured: see fastlane/.env.example") if key.nil?
+    UI.user_error!("Apple Team ID not configured: set APPLE_TEAM_ID or ios/LocalSigning.xcconfig") if TEAM_ID.empty?
+    check_checkout! unless options[:branch]
+
+    sh("cd #{IOS_DIR.shellescape} && xcodegen generate --quiet")
+    sh("swift", "test", "--package-path", File.join(IOS_DIR, "TocaCore"))
+
+    build = latest_testflight_build_number(api_key: key, app_identifier: APP_BUNDLE_ID,
+                                           initial_build_number: 0) + 1
+    build_app(
+      project: File.join(IOS_DIR, "Tocamatrol.xcodeproj"),
+      scheme: "Tocamatrol",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: BUILD_DIR,
+      output_name: File.basename(IPA),
+      clean: true,
+      export_options: { signingStyle: "automatic", teamID: TEAM_ID },
+      # The API key lets xcodebuild create the App Store profile without an Apple ID login.
+      xcargs: "-allowProvisioningUpdates" \
+              " -authenticationKeyPath #{ASC_KEY_PATH.shellescape}" \
+              " -authenticationKeyID #{ASC_KEY_ID} -authenticationKeyIssuerID #{ASC_ISSUER}" \
+              " CURRENT_PROJECT_VERSION=#{build}"
+    )
+    upload_to_testflight(
+      api_key: key,
+      ipa: IPA,
+      skip_submission: true,                  # internal testers only; no beta review
+      skip_waiting_for_build_processing: true # Apple processes it in 5-15 minutes
+    )
+    UI.success("Uploaded build #{build} (#{git_head}). It reaches TestFlight once Apple has processed it.")
+  end
+
+  desc "Capture the screenshot catalog on every Snapfile device, one simulator at a time. " \
+       "Pass devices:\"Tocamatrol-Shots-iPadmini\" (comma-separated) for some of them."
+  lane :screenshots do |options|
+    devices = options[:devices] ? options[:devices].split(",").map(&:strip) : SHOT_DEVICES.keys
+    sh("cd #{IOS_DIR.shellescape} && xcodegen generate --quiet")
+    ensure_shot_devices(SHOT_DEVICES.keys)
+    # Clear only the devices being captured, so a partial run keeps the others.
+    devices.each { |device| FileUtils.rm_f(Dir.glob(File.join(RAW_SHOTS_DIR, "#{device}-*"))) }
+    devices.each do |device|
+      before = booted_simulators
+      begin
+        snapshot(devices: [device], concurrent_simulators: false, clear_previous_screenshots: false)
+      ensure
+        # Shut down only the simulator this run booted.
+        (booted_simulators - before).each { |udid| sh("xcrun", "simctl", "shutdown", udid) rescue nil }
+      end
+    end
+    UI.success("Screenshots in #{RAW_SHOTS_DIR}")
+  end
+
+  desc "Reconcile App Store Connect screenshots with fastlane/deliver_screenshots (idempotent)."
+  lane :screenshots_sync do
+    sync = new_screenshot_sync
+    plan = sync.local_screenshot_plan
+    expected = plan.values.sum { |types| types.values.sum(&:count) }
+    plan.each { |locale, types| UI.message("local: #{locale} — #{types.map { |t, e| "#{t}=#{e.count}" }.join(', ')}") }
+
+    version = sync.asc_edit_version
+    passes = 6
+    converged = false
+    passes.times do |i|
+      UI.important("reconcile pass #{i + 1}/#{passes}")
+      changed = sync.reconcile_screenshots(version, plan)
+      sync.wait_for_screenshot_processing(version) if changed
+      unless changed
+        converged = true
+        break
+      end
+    end
+    UI.user_error!("Screenshots did not converge after #{passes} passes — run `fastlane ios screenshots_audit`.") unless converged
+
+    sync.sort_remote_screenshots(version, plan)
+    problems = sync.verify_screenshots(version, plan)
+    unless problems.empty?
+      problems.each { |p| UI.error(p) }
+      UI.user_error!("Screenshots on App Store Connect do not match local. See errors above.")
+    end
+
+    counts = sync.remote_screenshot_counts(version)
+    total = counts.values.sum
+    UI.user_error!("Expected #{expected} screenshots, found #{total} #{counts}") if total != expected
+    UI.success("Screenshots verified: #{total} on App Store Connect, exactly matching local.")
+  end
+
+  desc "READ-ONLY: report remote App Store Connect screenshot sets and counts."
+  lane :screenshots_audit do
+    sync = new_screenshot_sync
+    version = sync.asc_edit_version
+    UI.important("version #{version.version_string} (#{version.app_store_state})")
+    version.get_app_store_version_localizations.each do |loc|
+      sets = loc.get_app_screenshot_sets
+      UI.important("#{loc.locale}: #{sets.count} set(s)")
+      sets.each do |set|
+        shots = set.app_screenshots || []
+        UI.message("  #{set.screenshot_display_type}: #{shots.count}")
+        shots.each { |s| UI.message("    #{s.file_name} state=#{(s.asset_delivery_state || {})['state']}") }
+      end
+    end
+  end
+
+  desc "Upload App Store listing metadata from fastlane/metadata without submitting for review"
+  lane :sync_metadata do
+    require_asc_release!.upload_metadata!
+  end
+
+  desc "List the latest builds on App Store Connect (read-only)"
+  lane :builds do
+    require_asc_release!.recent_builds.each do |b|
+      UI.message("#{b.pre_release_version&.version} (#{b.version})  #{b.processing_state}  #{b.uploaded_date}")
+    end
+  end
+end
+
+# Builds only what is on GitHub main, committed, so every TestFlight build has a commit.
+def check_checkout!
+  sh("git", "-C", REPO_DIR, "fetch", "--quiet", "origin", "main")
+  dirty = sh("git", "-C", REPO_DIR, "status", "--porcelain", log: false).strip
+  UI.user_error!("Uncommitted changes in #{REPO_DIR}") unless dirty.empty?
+  origin = sh("git", "-C", REPO_DIR, "rev-parse", "origin/main", log: false).strip
+  return if git_head == origin
+
+  UI.user_error!("This checkout is not GitHub main. Run `git switch main && git pull --ff-only`, " \
+                 "or pass branch:true to build it anyway.")
+end
+
+def ensure_shot_devices(names)
+  available = sh("xcrun", "simctl", "list", "devices", "available", log: false)
+  names.each do |name|
+    UI.user_error!("Unknown screenshot device #{name}") unless SHOT_DEVICES.key?(name)
+    next if available.include?("#{name} (")
+
+    sh("xcrun", "simctl", "create", name, SHOT_DEVICES[name], SHOT_RUNTIME)
+  end
+end
+
+def booted_simulators
+  sh("xcrun", "simctl", "list", "devices", "booted", log: false).scan(/\(([0-9A-F-]{36})\) \(Booted\)/).flatten
+end
+
+def git_head
+  sh("git", "-C", REPO_DIR, "rev-parse", "HEAD", log: false).strip
+end

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "boards": [
+    {
+      "id": "t-dongle-s3",
+      "name": "LilyGO T-Dongle-S3",
+      "shortName": "T-Dongle-S3",
+      "chip": "ESP32-S3",
+      "pioEnv": "t-dongle-s3",
+      "recommended": true,
+      "usbConnector": "USB-A plug (direct PC plug-in)",
+      "statusIndicator": "0.96\" color LCD + dim rear APA102 LED",
+      "pcPortNote": "Plug the USB-A plug directly into any PC, Mac, or Linux USB port.",
+      "bootInstructions": [
+        "Hold the small BOOT button on the side of the dongle.",
+        "While still holding BOOT, plug the dongle into your computer's USB port.",
+        "Release BOOT after plugging it in, then click Connect & Flash below.",
+        "After flashing completes, unplug the dongle and plug it back in normally."
+      ],
+      "flashFilename": "tocamatrol-t-dongle-s3.bin",
+      "notes": "Recommended all-in-one USB stick with built-in status screen showing connection state, pairing timer, and device code."
+    },
+    {
+      "id": "xiao-esp32s3",
+      "name": "Seeed Studio XIAO ESP32-S3",
+      "shortName": "XIAO ESP32-S3",
+      "chip": "ESP32-S3",
+      "pioEnv": "xiao-esp32s3",
+      "recommended": false,
+      "usbConnector": "USB-C (use a data-capable USB cable or USB-C to USB-A adapter)",
+      "statusIndicator": "Single amber/orange user LED",
+      "pcPortNote": "Connect its USB-C port to your computer with a data-capable USB cable.",
+      "bootInstructions": [
+        "Hold the tiny B (BOOT) button near the USB-C connector.",
+        "While holding B, connect the board to your computer using a USB data cable.",
+        "Release B once plugged in, then click Connect & Flash below.",
+        "After flashing, unplug and replug the board (or press R) without holding B."
+      ],
+      "flashFilename": "tocamatrol-xiao-esp32s3.bin",
+      "notes": "Thumb-sized USB-C board. Has no screen, so status is shown by the onboard LED blink pattern."
+    },
+    {
+      "id": "devkitc-s3-n8",
+      "name": "ESP32-S3-DevKitC-1 (N8 / N4 / Quad PSRAM)",
+      "shortName": "DevKitC-1 N8",
+      "chip": "ESP32-S3",
+      "pioEnv": "devkitc-s3-n8",
+      "recommended": false,
+      "usbConnector": "Dual USB-C (COM/UART for flashing, USB for HID)",
+      "statusIndicator": "Onboard WS2812 RGB LED",
+      "pcPortNote": "Use the port labeled USB (not COM/UART) when plugging into the target computer as a mouse and keyboard.",
+      "bootInstructions": [
+        "Plug a USB data cable into the port labeled COM or UART (no BOOT hold needed on most boards).",
+        "If flashing does not connect, hold BOOT, tap RST, then release BOOT.",
+        "After flashing finishes, move your USB cable to the port labeled USB to use it with your PC."
+      ],
+      "flashFilename": "tocamatrol-devkitc-s3-n8.bin",
+      "notes": "For standard N8/N4 modules without octal PSRAM. Use the N16R8 / N8R8 build if your module has octal PSRAM (R8)."
+    },
+    {
+      "id": "devkitc-s3",
+      "name": "ESP32-S3-DevKitC-1 (N16R8 / N8R8 Octal PSRAM)",
+      "shortName": "DevKitC-1 N16R8",
+      "chip": "ESP32-S3",
+      "pioEnv": "devkitc-s3",
+      "recommended": false,
+      "usbConnector": "Dual USB-C (COM/UART for flashing, USB for HID)",
+      "statusIndicator": "Onboard WS2812 RGB LED",
+      "pcPortNote": "Use the port labeled USB (not COM/UART) when plugging into the target computer as a mouse and keyboard.",
+      "bootInstructions": [
+        "Plug a USB data cable into the port labeled COM or UART (no BOOT hold needed on most boards).",
+        "If flashing over the USB port directly, hold BOOT while plugging in and replug after flashing.",
+        "To use as a dongle, plug the port labeled USB into your computer."
+      ],
+      "flashFilename": "tocamatrol-devkitc-s3.bin",
+      "notes": "Configured with octal PSRAM (qio_opi) required by ESP32-S3-WROOM-1 N16R8 and N8R8 modules. RGB LED is on GPIO 48 (GPIO 38 on v1.1 boards)."
+    }
+  ]
+}

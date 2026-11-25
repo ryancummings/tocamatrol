@@ -1,0 +1,23 @@
+# The screenshot catalog (TocamatrolUITests/ScreenshotCatalogUITests): the smallest and largest
+# iPhone and iPad, so scaling problems show at both ends. `fastlane screenshots` creates these
+# simulators when they are missing and runs them one at a time.
+devices([
+  "Tocamatrol-Shots-iPhone17e",
+  "Tocamatrol-Shots-iPhone17ProMax",
+  "Tocamatrol-Shots-iPadmini",
+  "Tocamatrol-Shots-iPadPro13"
+])
+
+languages(["en-US"])
+
+scheme("Tocamatrol")
+only_testing(["TocamatrolUITests/ScreenshotCatalogUITests"])
+
+# xcbeautify: xcpretty dies on non-ASCII output. Serial tests: Xcode's parallel clones
+# intermittently fail to launch the test runner.
+xcodebuild_formatter("xcbeautify")
+xcargs("-parallel-testing-enabled NO")
+
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+override_status_bar(true)

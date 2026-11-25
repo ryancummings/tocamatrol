@@ -1,0 +1,117 @@
+name: Deploy Web Flasher & Firmware Releases
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build all release firmware boards
+        working-directory: dongle
+        run: pio run
+
+      - name: Stage firmware binaries & manifest
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re, shutil
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ini = Path("dongle/platformio.ini").read_text()
+          major = re.search(r"-DFW_VERSION_MAJOR=(\d+)", ini).group(1)
+          minor = re.search(r"-DFW_VERSION_MINOR=(\d+)", ini).group(1)
+          ref = os.environ["GITHUB_REF_NAME"]
+          version = ref.lstrip("v") if ref.startswith("v") else f"{major}.{minor}.0"
+
+          boards = json.loads(Path("boards.json").read_text())["boards"]
+          out_dir = Path("web/public/firmware")
+          out_dir.mkdir(parents=True, exist_ok=True)
+          release_dir = Path("release-artifacts")
+          release_dir.mkdir(parents=True, exist_ok=True)
+
+          manifest_boards = {}
+          sums = []
+          for board in boards:
+              src = Path("dongle/.pio/build") / board["pioEnv"] / "firmware-merged.bin"
+              dest = out_dir / board["flashFilename"]
+              shutil.copy2(src, dest)
+              shutil.copy2(src, release_dir / board["flashFilename"])
+              data = dest.read_bytes()
+              sha256 = hashlib.sha256(data).hexdigest()
+              manifest_boards[board["id"]] = {
+                  "file": f"firmware/{board['flashFilename']}",
+                  "size": len(data),
+                  "sha256": sha256,
+              }
+              sums.append(f"{sha256}  {board['flashFilename']}")
+
+          manifest = {
+              "version": version,
+              "builtAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "boards": manifest_boards,
+          }
+          (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+          (release_dir / "SHA256SUMS.txt").write_text("\n".join(sums) + "\n")
+          PY
+
+      - name: Build static web flasher site
+        working-directory: web
+        env:
+          VITE_BASE_PATH: /tocamatrol/
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+      - name: Publish GitHub Release on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release-artifacts/*.bin
+            release-artifacts/SHA256SUMS.txt
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

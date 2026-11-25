@@ -1,0 +1,2 @@
+// LocalSigning.xcconfig is gitignored; copy LocalSigning.xcconfig.example to set your Apple Team ID.
+#include? "LocalSigning.xcconfig"

@@ -1,0 +1,81 @@
+# XcodeGen spec. Generate the project with `xcodegen generate` in this folder;
+# Tocamatrol.xcodeproj is not committed.
+name: Tocamatrol
+options:
+  bundleIdPrefix: com.OneRadStudio
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  TocaCore:
+    path: TocaCore
+
+configFiles:
+  Debug: Signing.xcconfig
+  Release: Signing.xcconfig
+
+settings:
+  base:
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    # fastlane `beta` overrides this with the next build number on App Store Connect.
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Tocamatrol:
+    type: application
+    platform: iOS
+    sources:
+      - path: Tocamatrol
+    dependencies:
+      - package: TocaCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.OneRadStudio.tocamatrol
+        PRODUCT_NAME: Tocamatrol
+        TARGETED_DEVICE_FAMILY: "1,2"
+        # The app target is plain Swift 5 with main-queue callbacks; TocaCore uses Swift 6.
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: minimal
+        GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Only standard system Bluetooth encryption: exempt from export compliance.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        INFOPLIST_KEY_CFBundleDisplayName: Tocamatrol
+        INFOPLIST_KEY_NSFaceIDUsageDescription: Tocamatrol can require Face ID before opening so saved macros stay private.
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: Tocamatrol connects to your ESP32-S3 USB dongle over Bluetooth to send macro keystrokes, pointer movement, and scrolling to your computer.
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_UIStatusBarHidden: NO
+
+  # The screenshot catalog (fastlane `screenshots`) and UI test suite.
+  TocamatrolUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: TocamatrolUITests
+    dependencies:
+      - target: Tocamatrol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.OneRadStudio.tocamatrol.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        TEST_TARGET_NAME: Tocamatrol
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+schemes:
+  Tocamatrol:
+    build:
+      targets:
+        Tocamatrol: all
+    test:
+      targets:
+        - package: TocaCore/TocaCoreTests
+        - TocamatrolUITests
+    run:
+      config: Debug

@@ -1,0 +1,27 @@
+Tocamatrol turns your iPhone or iPad into a wireless macro pad and multi-touch trackpad for macOS, Windows, or Linux without installing drivers or background software on your computer.
+
+Your device connects over bonded Bluetooth Low Energy (BLE) to a small ESP32-S3 USB dongle plugged into the target computer. To the computer, the dongle appears as a standard USB HID keyboard and mouse.
+
+HARDWARE REQUIRED
+Tocamatrol requires a compatible ESP32-S3 development board (such as a LILYGO T-Dongle-S3, Seeed XIAO ESP32S3, or ESP32-S3-DevKitC-1) flashed with the free, open-source Tocamatrol firmware. Flash directly from Chrome or Edge using the Web Serial flasher at https://ryancummings.github.io/tocamatrol/. Classic ESP32, ESP32-S2, ESP32-C3, and ESP32-C6 boards are not supported because the dongle needs both native USB-OTG HID and BLE.
+
+MACRO PAD
+• Start immediately with a ready-to-edit Starter page and multiple custom pages.
+• Adjust each page's grid independently from 2×2 up to 8×6.
+• Move buttons by holding and dragging, or resize buttons across any rectangle of cells (1×1, 2×1, 2×2, 3×1, and more) with the corner grip or steppers.
+• Build multi-step macros combining keyboard shortcuts, typed text, and timed pauses, or record sequences with the built-in virtual keyboard.
+• Customize button colors, typefaces, text sizes, and optional captions.
+• Back up or share macro libraries as portable JSON files.
+
+TRACKPAD
+• Full multi-touch glass trackpad with velocity-based cursor acceleration.
+• Single-finger tap to click and tap-and-drag.
+• Two-finger tap for right-click and three-finger tap/drag for middle-click.
+• Smooth two-finger vertical and horizontal scrolling with Natural or Classic scroll toggle and coasting inertia.
+• Built-in palm rejection so resting your hand near edges will not trigger stray clicks.
+
+PRIVATE BY DESIGN
+• Standard USB HID keyboard and mouse output only — no desktop agent, cloud account, or telemetry.
+• Bonded BLE security ensures the dongle only accepts input from paired devices.
+• Optional Face ID / Touch ID / Passcode lock protects your saved macros on-device.
+• Fully open source under the MIT License: https://github.com/ryancummings/tocamatrol

@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "builtAt": "2026-11-25T00:00:00Z",
+  "boards": {
+    "t-dongle-s3": {
+      "file": "firmware/tocamatrol-t-dongle-s3.bin",
+      "size": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "xiao-esp32s3": {
+      "file": "firmware/tocamatrol-xiao-esp32s3.bin",
+      "size": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "devkitc-s3-n8": {
+      "file": "firmware/tocamatrol-devkitc-s3-n8.bin",
+      "size": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "devkitc-s3": {
+      "file": "firmware/tocamatrol-devkitc-s3.bin",
+      "size": 0,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}

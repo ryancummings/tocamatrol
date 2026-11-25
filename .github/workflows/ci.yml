@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Run native logic tests
+        working-directory: dongle
+        run: pio test -e native
+      - name: Build release firmware images
+        working-directory: dongle
+        run: pio run
+      - name: Verify merged binaries and HID-only release symbols
+        working-directory: dongle
+        run: |
+          set -euo pipefail
+          NM_BIN=$(find ~/.platformio/packages -name "xtensa-esp32s3-elf-nm" | head -n 1)
+          test -n "$NM_BIN"
+          for env in t-dongle-s3 xiao-esp32s3 devkitc-s3-n8 devkitc-s3; do
+            test -s ".pio/build/${env}/firmware-merged.bin"
+            if "$NM_BIN" -C ".pio/build/${env}/firmware.elf" | grep -E "USBCDC|USBSerial|StatusCollection"; then
+              echo "Unexpected serial or vendor HID symbol in ${env}"
+              exit 1
+            fi
+          done
+
+  toca-core:
+    runs-on: ubuntu-latest
+    container:
+      image: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run TocaCore tests
+        working-directory: ios/TocaCore
+        run: swift test
+
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Run Python packet encoder self-test
+        run: uv run tools/send_test.py --selftest
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+      - name: Test
+        working-directory: web
+        run: npx vitest run
+      - name: Build
+        working-directory: web
+        run: npm run build

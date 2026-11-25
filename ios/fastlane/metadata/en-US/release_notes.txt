@@ -1,0 +1,1 @@
+Initial open-source release with customizable macro grids, resizable buttons, multi-touch trackpad with 2D scrolling, JSON macro backup, and browser-based ESP32-S3 firmware flashing.
