@@ -114,16 +114,27 @@ struct LockCover: View {
     var body: some View {
         ZStack {
             Theme.ground.ignoresSafeArea()
+            HalftoneBackground().ignoresSafeArea()
             if lock.locked {
                 VStack(spacing: 18) {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 34, weight: .medium))
-                        .foregroundStyle(Theme.amber)
+                    ZStack {
+                        Circle()
+                            .fill(Theme.inkShadow)
+                            .frame(width: 72, height: 72)
+                            .offset(x: 3, y: 4)
+                        Circle()
+                            .fill(Theme.popYellow)
+                            .overlay { Circle().strokeBorder(Theme.popInk, lineWidth: 2.5) }
+                            .frame(width: 72, height: 72)
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundStyle(Theme.popInk)
+                    }
                     Text("Tocamatrol is locked")
-                        .font(.title3.weight(.semibold))
+                        .font(.system(.title3, design: .rounded, weight: .heavy))
                         .foregroundStyle(Theme.text)
                     if let failure = lock.failure {
-                        Text(failure).font(.footnote).foregroundStyle(Theme.dim)
+                        Text(failure).font(.footnote).foregroundStyle(Theme.muted)
                     }
                     Button {
                         Task { await lock.unlock() }
@@ -138,8 +149,8 @@ struct LockCover: View {
                 }
             } else {
                 Image(systemName: "square.grid.3x3.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Theme.hairline)
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundStyle(Theme.inkBorder.opacity(0.45))
             }
         }
         .accessibilityElement(children: .contain)

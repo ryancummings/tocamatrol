@@ -90,7 +90,7 @@ struct MacrosView: View {
                             Button { name(macro, copying: true) } label: {
                                 Label("Duplicate", systemImage: "plus.square.on.square")
                             }
-                            .tint(Theme.amber)
+                            .tint(Theme.tint)
                         }
                     }
                     .onDelete { offsets in
@@ -149,7 +149,7 @@ struct MacrosView: View {
                 }
             }
         }
-        .tint(Theme.amber)
+        .tint(Theme.tint)
         .alert(naming?.copying == true ? "Duplicate Macro" : "Rename Macro",
                isPresented: Binding(get: { naming != nil }, set: { if !$0 { naming = nil } }),
                presenting: naming) { naming in
@@ -187,13 +187,15 @@ struct MacroRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
-                Text(macro.name).foregroundStyle(Theme.text)
+                Text(macro.name)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Theme.text)
                 Spacer()
-                if macro.speed != .normal { MonoTag(text: macro.speed.label).foregroundStyle(Theme.muted) }
+                if macro.speed != .normal { MonoTag(text: macro.speed.label) }
             }
             Text(MacroDescription.text(macro.actions))
                 .font(.caption.monospaced())
-                .foregroundStyle(Theme.dim)
+                .foregroundStyle(Theme.muted)
                 .lineLimit(1)
         }
     }
@@ -208,7 +210,7 @@ struct MacroCap: View {
     /// Lines under the caption, such as "tap to stop".
     var details: [String] = []
     var pressed = false
-    /// The amber light: lifted in the editor, or playing on the pad.
+    /// The active badge: lifted in the editor, or playing on the pad.
     var lit = false
     var ringed = false
 
@@ -240,13 +242,10 @@ private struct PageEditorView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     TextField("Name", text: $store.library.pages[index].title)
-                        .font(.title3.weight(.semibold))
+                        .font(.system(.title3, design: .rounded, weight: .bold))
                         .padding(.horizontal, 12)
-                        .frame(height: 44)
-                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
-                        }
+                        .frame(height: 46)
+                        .comicPanel(fill: Theme.surface, cornerRadius: 10, borderWidth: 2, shadowOffset: 2)
                     GridSizeBar(page: page) { newShape in
                         let changed = store.setGridShape(newShape, on: pageID)
                         if changed, let sel = selection, !newShape.contains(sel) {
@@ -257,9 +256,9 @@ private struct PageEditorView: View {
                         SectionLabel(text: "Buttons")
                         Spacer()
                         Text(countText(page))
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .tracking(1)
-                            .foregroundStyle(Theme.dim)
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .tracking(0.8)
+                            .foregroundStyle(Theme.muted)
                     }
                     EditorGrid(page: page, selection: $selection, dragging: $dragging, onMove: { from, to in
                         let moved = store.move(from, to: to, on: pageID)
@@ -275,7 +274,7 @@ private struct PageEditorView: View {
                     })
                     Text("Tap a button or empty cell to edit. Hold and drag to move; drag the bottom-right grip on a selected button to resize.")
                         .font(.footnote)
-                        .foregroundStyle(Theme.dim)
+                        .foregroundStyle(Theme.muted)
                     if let selection {
                         Inspector(page: page, cell: selection, creatingCell: $creatingCell) { self.selection = nil }
                             .id("inspector")
@@ -296,7 +295,12 @@ private struct PageEditorView: View {
                 }
             }
             }
-            .background(Theme.ground)
+            .background {
+                ZStack {
+                    Theme.ground.ignoresSafeArea()
+                    HalftoneBackground().ignoresSafeArea()
+                }
+            }
             .navigationTitle(page.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -311,7 +315,7 @@ private struct PageEditorView: View {
                         store.assign(macro.id, to: cell.cell, on: pageID)
                     }
                 }
-                .tint(Theme.amber)
+                .tint(Theme.tint)
             }
         } else {
             ContentUnavailableView("Page deleted", systemImage: "square.grid.3x3")
@@ -349,9 +353,8 @@ private struct GridSizeBar: View {
                             let allowed = page.canResizeGrid(to: preset)
                             Button("\(preset.columns)×\(preset.rows)") { onChange(preset) }
                                 .buttonStyle(ConsoleTileButtonStyle(size: 28, active: active))
-                                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .disabled(!allowed)
-                                .opacity(allowed ? 1 : 0.35)
                         }
                     }
                 }
@@ -375,17 +378,14 @@ private struct GridSizeBar: View {
             }
         }
         .padding(12)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
-        }
+        .comicPanel(fill: Theme.surface, cornerRadius: 12, borderWidth: 2, shadowOffset: 3)
     }
 
     private func axisStepper(title: String, value: Int, range: ClosedRange<Int>,
                              set: @escaping (Int) -> Void, canStep: @escaping (Int) -> Bool) -> some View {
         HStack(spacing: 6) {
             Text(title)
-                .font(.caption.monospaced())
+                .font(.caption.weight(.bold).monospaced())
                 .foregroundStyle(Theme.muted)
             Spacer(minLength: 2)
             Button {
@@ -395,12 +395,11 @@ private struct GridSizeBar: View {
             }
             .buttonStyle(ConsoleTileButtonStyle(size: 30))
             .disabled(value <= range.lowerBound || !canStep(value - 1))
-            .opacity(value <= range.lowerBound || !canStep(value - 1) ? 0.35 : 1)
             .accessibilityLabel("Decrease \(title)")
 
             Text("\(value)")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                .foregroundStyle(Theme.amberLabel)
+                .font(.system(size: 15, weight: .black, design: .monospaced))
+                .foregroundStyle(Theme.highlightLabel)
                 .frame(minWidth: 20)
 
             Button {
@@ -410,7 +409,6 @@ private struct GridSizeBar: View {
             }
             .buttonStyle(ConsoleTileButtonStyle(size: 30))
             .disabled(value >= range.upperBound || !canStep(value + 1))
-            .opacity(value >= range.upperBound || !canStep(value + 1) ? 0.35 : 1)
             .accessibilityLabel("Increase \(title)")
         }
         .frame(maxWidth: .infinity)
@@ -475,11 +473,12 @@ private struct EditorGrid: View {
                     footprintPreview(origin: button.origin, span: span, valid: ok, cell: cell, spacing: spacing, step: step)
                         .overlay(alignment: .bottomTrailing) {
                             Text(span.label)
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(ok ? Theme.amber : Theme.red, in: Capsule())
-                                .foregroundStyle(Theme.ground)
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(ok ? Theme.popYellow : Theme.red, in: Capsule())
+                                .overlay { Capsule().strokeBorder(Theme.popInk, lineWidth: 1.5) }
+                                .foregroundStyle(ok ? Theme.popInk : .white)
                                 .offset(x: CGFloat(button.origin.column) * step.width + spanLength(span.columns, cell.width, spacing) - 4,
                                         y: CGFloat(button.origin.row) * step.height + spanLength(span.rows, cell.height, spacing) - 4)
                         }
@@ -501,11 +500,11 @@ private struct EditorGrid: View {
 
     private func footprintPreview(origin: Cell, span: ButtonSpan, valid: Bool,
                                   cell: CGSize, spacing: CGFloat, step: CGSize) -> some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill((valid ? Theme.amber : Theme.red).opacity(0.14))
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill((valid ? Theme.tint : Theme.red).opacity(0.18))
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(valid ? Theme.amber : Theme.red, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(valid ? Theme.tint : Theme.red, lineWidth: 2.5)
             }
             .frame(width: spanLength(span.columns, cell.width, spacing),
                    height: spanLength(span.rows, cell.height, spacing))
@@ -533,7 +532,7 @@ private struct EditorGrid: View {
             }
             .scaleEffect(lifted ? 1.06 : 1)
             .rotationEffect(.degrees(lifted ? -2 : 0))
-            .shadow(color: .black.opacity(lifted ? 0.65 : 0), radius: lifted ? 18 : 0, y: lifted ? 11 : 0)
+            .shadow(color: .black.opacity(lifted ? 0.45 : 0), radius: lifted ? 14 : 0, y: lifted ? 9 : 0)
             .offset(x: CGFloat(button.origin.column) * step.width + (lifted ? drag!.translation.width : 0),
                     y: CGFloat(button.origin.row) * step.height + (lifted ? drag!.translation.height : 0))
             .zIndex(lifted || resizeDrag?.origin == button.origin ? 2 : selected ? 1 : 0)
@@ -553,11 +552,12 @@ private struct EditorGrid: View {
 
     private func resizeGrip(_ button: MacroButton, step: CGSize) -> some View {
         Image(systemName: "arrow.up.left.and.arrow.down.right")
-            .font(.system(size: 10, weight: .bold))
-            .foregroundStyle(Theme.ground)
-            .frame(width: 22, height: 22)
-            .background(Theme.amber, in: Circle())
-            .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
+            .font(.system(size: 10, weight: .black))
+            .foregroundStyle(Theme.popInk)
+            .frame(width: 24, height: 24)
+            .background(Theme.popYellow, in: Circle())
+            .overlay { Circle().strokeBorder(Theme.popInk, lineWidth: 2) }
+            .background { Circle().fill(Theme.inkShadow).offset(x: 2, y: 2) }
             .padding(4)
             .contentShape(Rectangle())
             .highPriorityGesture(
@@ -622,9 +622,9 @@ private struct EditorGrid: View {
 
     @ViewBuilder private func selectionRing(_ on: Bool) -> some View {
         if on {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Theme.amber, lineWidth: 3)
-                .padding(-3)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Theme.tint, lineWidth: 3.5)
+                .padding(-3.5)
                 .allowsHitTesting(false)
         }
     }
@@ -659,11 +659,11 @@ private struct Inspector: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(button == nil ? "Empty cell" : macro?.name ?? "Deleted macro")
-                        .font(.headline)
+                        .font(.system(.headline, design: .rounded, weight: .bold))
                         .foregroundStyle(Theme.text)
                     Text(button == nil ? "No button here yet." : macro.map { MacroDescription.text($0.actions) } ?? "")
                         .font(.caption.monospaced())
-                        .foregroundStyle(Theme.dim)
+                        .foregroundStyle(Theme.muted)
                         .lineLimit(2)
                 }
                 Spacer()
@@ -680,7 +680,7 @@ private struct Inspector: View {
                     }
                 } label: {
                     Text(button == nil ? "Choose Macro" : "Change")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.bold))
                 }
                 .buttonStyle(ConsoleTileButtonStyle(active: true))
             }
@@ -689,8 +689,8 @@ private struct Inspector: View {
                     SectionLabel(text: "Size")
                     Spacer()
                     Text(button.span.label)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(Theme.amberLabel)
+                        .font(.caption.weight(.bold).monospaced())
+                        .foregroundStyle(Theme.highlightLabel)
                 }
                 HStack(spacing: 8) {
                     ForEach(ButtonSpan.commonPresets, id: \.self) { preset in
@@ -701,13 +701,12 @@ private struct Inspector: View {
                         } label: {
                             VStack(spacing: 4) {
                                 SpanGlyph(span: preset)
-                                Text(preset.label).font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                Text(preset.label).font(.system(size: 11, weight: .bold, design: .monospaced))
                             }
                             .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(ConsoleTileButtonStyle(size: 50, active: active))
                         .disabled(!allowed)
-                        .opacity(allowed ? 1 : 0.35)
                     }
                 }
                 HStack(spacing: 12) {
@@ -736,51 +735,49 @@ private struct Inspector: View {
                     onDeselect()
                 } label: {
                     Label("Remove from Page", systemImage: "minus.circle")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.bold))
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .foregroundStyle(Theme.red)
-                        .background(Theme.red.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.radius))
+                        .background(Theme.red.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: Theme.radius).strokeBorder(Theme.red.opacity(0.5), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                                .strokeBorder(Theme.red, lineWidth: 2)
                         }
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(14)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
-        }
+        .comicPanel(fill: Theme.surface, cornerRadius: 12, borderWidth: 2, shadowOffset: 3)
     }
 
     private func spanStepper(label: String, value: Int, minusEnabled: Bool, plusEnabled: Bool,
                              adjust: @escaping (Int) -> Void) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             Text(label)
-                .font(.caption.monospaced())
+                .font(.caption.weight(.bold).monospaced())
                 .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             Spacer(minLength: 2)
             Button { adjust(-1) } label: { Image(systemName: "minus") }
                 .buttonStyle(ConsoleTileButtonStyle(size: 30))
                 .disabled(!minusEnabled)
-                .opacity(minusEnabled ? 1 : 0.35)
                 .accessibilityLabel("Decrease button \(label.lowercased())")
             Text("\(value)")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                .foregroundStyle(Theme.amberLabel)
-                .frame(minWidth: 18)
+                .font(.system(size: 15, weight: .black, design: .monospaced))
+                .foregroundStyle(Theme.highlightLabel)
+                .frame(minWidth: 16)
             Button { adjust(1) } label: { Image(systemName: "plus") }
                 .buttonStyle(ConsoleTileButtonStyle(size: 30))
                 .disabled(!plusEnabled)
-                .opacity(plusEnabled ? 1 : 0.35)
                 .accessibilityLabel("Increase button \(label.lowercased())")
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
+            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).strokeBorder(Theme.inkBorder, lineWidth: 1.5)
         }
         .frame(maxWidth: .infinity)
     }

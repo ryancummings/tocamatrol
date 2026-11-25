@@ -171,10 +171,11 @@ private struct VirtualKeyCap: View {
     let latched: Bool
 
     var body: some View {
-        Keycap(style: key.isModifier || key.label.count > 1 ? .graphite : Self.letter, pressed: down, ringed: latched, labelPadding: 1) {
+        let style: KeyStyle = latched ? .sand : (key.isModifier || key.label.count > 1 ? .graphite : .keyboardLetter)
+        Keycap(style: style, pressed: down, ringed: latched, labelPadding: 1) {
             VStack(spacing: 0) {
-                if let shifted = key.shifted { Text(shifted).font(.caption2).opacity(0.6) }
-                Text(key.label).font(key.label.count > 1 ? .caption.weight(.medium) : .body.weight(.medium))
+                if let shifted = key.shifted { Text(shifted).font(.caption2.weight(.semibold)).opacity(0.65) }
+                Text(key.label).font(key.label.count > 1 ? .caption.weight(.bold) : .body.weight(.bold))
             }
             .minimumScaleFactor(0.5)
             .lineLimit(1)
@@ -183,10 +184,6 @@ private struct VirtualKeyCap: View {
             .accessibilityLabel(key.id)
             .accessibilityAddTraits(.isButton)
     }
-
-    /// Letters and digits, a step lighter than the named keys.
-    private static let letter = KeyStyle(skirt: Color(hex: 0x100E0A), top: Color(hex: 0x3A352C), bottom: Color(hex: 0x302B23),
-                                         pressedTop: Color(hex: 0x5A5244), label: Theme.text)
 }
 
 /// A macro's steps in words: “Ctrl+C”, typed text in quotes, and pauses of a third of a second or more.

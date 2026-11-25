@@ -26,8 +26,8 @@ struct ConnectionManagerView: View {
                             Label("Flash an ESP32-S3 Dongle", systemImage: "cpu")
                             Spacer()
                             Image(systemName: "arrow.up.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(Theme.dim)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.muted)
                         }
                     }
                     Text("Forget removes a dongle from this list. iOS keeps its pairing until you forget it in Settings → Bluetooth, and the dongle keeps it until its BOOT button is held for 5 seconds, which makes it forget every phone.")
@@ -39,7 +39,7 @@ struct ConnectionManagerView: View {
                 .consoleRows()
             }
             .consoleForm()
-            .tint(Theme.amber)
+            .tint(Theme.tint)
             .navigationTitle("Dongle")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -78,11 +78,11 @@ struct ConnectionManagerView: View {
         Section {
             if let id = link.currentID {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(link.name(of: id)).font(.headline)
+                    Text(link.name(of: id)).font(.system(.headline, design: .rounded, weight: .bold))
                     Spacer()
                     StatusLabel(state: link.state)
                 }
-                Text(link.state.explanation).font(.subheadline).foregroundStyle(.secondary)
+                Text(link.state.explanation).font(.subheadline).foregroundStyle(Theme.muted)
                 if link.canRename {
                     Button("Rename…") {
                         newName = link.name(of: id)
@@ -90,9 +90,17 @@ struct ConnectionManagerView: View {
                     }
                 }
                 if link.state == .ready {
-                    LabeledContent("Signal") { Text(signalText(link.rssi)).font(.subheadline.monospaced()) }
+                    LabeledContent("Signal") {
+                        Text(signalText(link.rssi))
+                            .font(.subheadline.monospaced())
+                            .foregroundStyle(Theme.muted)
+                    }
                     if let info = link.dongleInfo {
-                        LabeledContent("Dongle") { Text(info).font(.subheadline.monospaced()) }
+                        LabeledContent("Dongle") {
+                            Text(info)
+                                .font(.subheadline.monospaced())
+                                .foregroundStyle(Theme.muted)
+                        }
                     }
                 }
                 switch link.state {
@@ -126,9 +134,10 @@ struct ConnectionManagerView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(link.name(of: dongle.id))
+                                .fontWeight(.semibold)
                             Text(link.nearbyDongle(dongle.id).map { "Nearby · \(signalText($0.rssi))" } ?? "Not nearby")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.muted)
                         }
                         Spacer()
                         Button("Use") { link.use(dongle.id) }
@@ -158,14 +167,15 @@ struct ConnectionManagerView: View {
             if newOnes.isEmpty {
                 HStack(spacing: 10) {
                     ProgressView()
-                    Text("Looking for dongles… Is the new one plugged in?").foregroundStyle(.secondary)
+                    Text("Looking for dongles… Is the new one plugged in?").foregroundStyle(Theme.muted)
                 }
             }
             ForEach(newOnes) { dongle in
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(dongle.name)
-                        Text(signalText(dongle.rssi)).font(.caption).foregroundStyle(.secondary)
+                            .fontWeight(.semibold)
+                        Text(signalText(dongle.rssi)).font(.caption).foregroundStyle(Theme.muted)
                     }
                     Spacer()
                     switch dongle.pairingWindowOpen {
@@ -175,10 +185,10 @@ struct ConnectionManagerView: View {
                     case false?:
                         Text("Press BOOT button")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.muted)
                     case nil:
                         Button("Pair") { link.use(dongle.id) }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(ConsoleTileButtonStyle())
                     }
                 }
             }
@@ -221,16 +231,19 @@ private struct PairingSteps: View {
     }
 }
 
-/// The link state as a coloured dot and a word.
+/// The link state as an ink-ringed status light and a label.
 struct StatusLabel: View {
     let state: DongleLink.State
 
     var body: some View {
         HStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 1.5).fill(state.color).frame(width: 8, height: 8)
+            Circle()
+                .fill(state.color)
+                .overlay { Circle().strokeBorder(Theme.popInk, lineWidth: 1.5) }
+                .frame(width: 9, height: 9)
             Text(state.title)
         }
-        .font(.subheadline.weight(.medium))
+        .font(.system(.subheadline, design: .rounded, weight: .bold))
     }
 }
 
@@ -266,7 +279,7 @@ extension DongleLink.State {
     var color: Color {
         switch self {
         case .ready: Theme.green
-        case .connecting, .securing: Theme.amber
+        case .connecting, .securing: Theme.popYellow
         case .noDongle: Theme.dim
         default: Theme.red
         }

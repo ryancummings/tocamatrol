@@ -68,6 +68,7 @@ struct MacroEditorView: View {
             }
         }
         .consoleForm()
+        .tint(Theme.tint)
         .environment(\.editMode, .constant(reordering ? .active : .inactive))
         // Pinned while choosing pauses, so it stays in reach however long the list is.
         .safeAreaInset(edge: .bottom) {
@@ -76,7 +77,7 @@ struct MacroEditorView: View {
                     .padding(.horizontal, Theme.margin)
                     .padding(.vertical, 10)
                     .background(Theme.surface.ignoresSafeArea())
-                    .overlay(alignment: .top) { Rectangle().fill(Theme.hairline).frame(height: 1) }
+                    .overlay(alignment: .top) { Rectangle().fill(Theme.inkBorder).frame(height: 2) }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -133,7 +134,6 @@ struct MacroEditorView: View {
                     Button("Play on PC", systemImage: "play.fill") { controller.play(macro) }
                         .buttonStyle(ConsoleTileButtonStyle(size: 36, active: true))
                         .disabled(steps.isEmpty || link.state != .ready)
-                        .opacity(steps.isEmpty || link.state != .ready ? 0.45 : 1)
                 }
             }
             Spacer(minLength: 0)
@@ -201,9 +201,9 @@ struct MacroEditorView: View {
                     Button(reordering ? "Done" : "Reorder") { withAnimation { reordering.toggle() } }
                 }
             }
-            .font(.system(size: 12, weight: .semibold))
+            .font(.system(size: 12, weight: .bold))
             .textCase(nil)
-            .tint(Theme.amber)
+            .tint(Theme.tint)
         } footer: {
             Text(selecting ? "Tick the pauses to change, then set them all to one length."
                  : "Steps play top to bottom. Tap one to change it, swipe left to delete it, or hold it for more.")
@@ -214,16 +214,16 @@ struct MacroEditorView: View {
 
     private var addRow: some View {
         HStack(spacing: 8) {
-            AddStepButton(title: "Text", systemImage: "text.cursor", id: "addText") {
+            AddStepButton(title: "Text", systemImage: "text.cursor", accent: Theme.tint, id: "addText") {
                 editing = StepEdit(action: .text(""))
             }
-            AddStepButton(title: "Shortcut", systemImage: "command", id: "addShortcut") {
+            AddStepButton(title: "Shortcut", systemImage: "command", accent: KeyStyle.violet.top, id: "addShortcut") {
                 editing = StepEdit(action: .shortcut(KeyChord(0, .leftControl)))
             }
-            AddStepButton(title: "Pause", systemImage: "timer", id: "addPause") {
+            AddStepButton(title: "Pause", systemImage: "timer", accent: Theme.amber, id: "addPause") {
                 editing = StepEdit(action: .pause(500))
             }
-            AddStepButton(title: "Record", systemImage: "record.circle", id: "addRecording") {
+            AddStepButton(title: "Record", systemImage: "record.circle", accent: Theme.red, id: "addRecording") {
                 recording = RecordTarget(replacing: nil)
             }
         }
@@ -356,21 +356,22 @@ private struct RecordTarget: Identifiable {
 private struct AddStepButton: View {
     let title: String
     let systemImage: String
+    let accent: Color
     let id: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                Image(systemName: systemImage).font(.system(size: 16, weight: .medium))
-                Text(title).font(.system(size: 12, weight: .semibold))
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(accent)
+                Text(title)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.text)
             }
-            .foregroundStyle(Theme.amberLabel)
             .frame(maxWidth: .infinity, minHeight: 52)
-            .background(Theme.amber.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).strokeBorder(Theme.amber.opacity(0.4), lineWidth: 1)
-            }
+            .comicPanel(fill: Theme.well, cornerRadius: 10, borderWidth: 2, shadowOffset: 2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -388,28 +389,32 @@ private struct StepRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(String(format: "%02d", number))
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(Theme.dim)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .foregroundStyle(Theme.popInk)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(Theme.popYellow, in: Capsule())
+                .overlay { Capsule().strokeBorder(Theme.popInk, lineWidth: 1.5) }
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.amber)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(accent)
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(kind)
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .tracking(1)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .tracking(0.8)
                     .textCase(.uppercase)
-                    .foregroundStyle(Theme.dim)
+                    .foregroundStyle(Theme.muted)
                 summary
                 if case let .text(text) = action, !USKeyboard.untypable(in: text).isEmpty {
                     Label("Leaves out \(String(USKeyboard.untypable(in: text)))", systemImage: "exclamationmark.triangle")
                         .font(.caption)
-                        .foregroundStyle(Theme.amber)
+                        .foregroundStyle(Theme.highlightLabel)
                 }
             }
             Spacer(minLength: 0)
             if showsChevron {
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.dim)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.muted)
             }
         }
         .contentShape(Rectangle())
@@ -419,15 +424,24 @@ private struct StepRow: View {
         switch action {
         case let .text(text):
             Text(text.isEmpty ? "Nothing to type" : MacroDescription.text(action))
-                .font(.body.monospaced())
-                .foregroundStyle(text.isEmpty ? Theme.dim : Theme.amberLabel)
+                .font(.body.monospaced().weight(.semibold))
+                .foregroundStyle(text.isEmpty ? Theme.dim : Theme.highlightLabel)
                 .lineLimit(3)
         case let .shortcut(chord):
             ChordView(chord: chord)
         case let .pause(ms):
-            Text(String(format: "%.2f s", Double(ms) / 1000)).font(.body.monospaced()).foregroundStyle(Theme.text)
+            Text(String(format: "%.2f s", Double(ms) / 1000)).font(.body.monospaced().weight(.semibold)).foregroundStyle(Theme.text)
         case let .recorded(steps):
-            Text(MacroDescription.text(steps)).font(.body.monospaced()).foregroundStyle(Theme.text).lineLimit(2)
+            Text(MacroDescription.text(steps)).font(.body.monospaced().weight(.semibold)).foregroundStyle(Theme.text).lineLimit(2)
+        }
+    }
+
+    private var accent: Color {
+        switch action {
+        case .text: Theme.tint
+        case .shortcut: KeyStyle.violet.top
+        case .pause: Theme.amber
+        case .recorded: Theme.red
         }
     }
 
@@ -450,7 +464,7 @@ private struct StepRow: View {
     }
 }
 
-/// A shortcut as little keycaps: [Ctrl] + [S].
+/// A shortcut as comic ink-outlined keycaps: [Ctrl] + [S].
 struct ChordView: View {
     let chord: KeyChord
     var large = false
@@ -463,16 +477,13 @@ struct ChordView: View {
                 Text("Choose a key").font(.body).foregroundStyle(Theme.dim)
             }
             ForEach(Array(names.enumerated()), id: \.offset) { index, name in
-                if index > 0 { Text("+").font(large ? .title3 : .caption).foregroundStyle(Theme.dim) }
+                if index > 0 { Text("+").font(large ? .title3.bold() : .caption.bold()).foregroundStyle(Theme.muted) }
                 Text(name)
-                    .font(.system(size: large ? 20 : 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: large ? 20 : 13, weight: .bold, design: .monospaced))
                     .foregroundStyle(Theme.text)
                     .padding(.horizontal, large ? 12 : 7)
-                    .frame(minWidth: large ? 48 : 28, minHeight: large ? 44 : 24)
-                    .background(Theme.raised, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.strongBorder, lineWidth: 1)
-                    }
+                    .frame(minWidth: large ? 48 : 28, minHeight: large ? 44 : 25)
+                    .comicPanel(fill: Theme.surface, cornerRadius: 7, borderWidth: 1.75, shadowOffset: 1.5)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -496,14 +507,27 @@ struct ButtonLookControls: View {
                     Button {
                         appearance.tint = tint
                     } label: {
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .fill(LinearGradient(colors: [style.top, style.bottom], startPoint: .top, endPoint: .bottom))
-                            .overlay { Circle().fill(style.label).frame(width: 6, height: 6).opacity(0.9) }
                             .overlay {
-                                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                    .strokeBorder(on ? Theme.amber : Theme.strongBorder, lineWidth: on ? 2 : 1)
+                                if on {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 12, weight: .black))
+                                        .foregroundStyle(style.label)
+                                }
                             }
-                            .frame(height: 34)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(on ? Theme.tint : style.border, lineWidth: on ? 3 : 2)
+                            }
+                            .background {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(style.shadow)
+                                    .offset(x: 2, y: 2)
+                            }
+                            .frame(height: 36)
+                            .padding(.trailing, 2)
+                            .padding(.bottom, 2)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(tint.name)
@@ -514,8 +538,8 @@ struct ButtonLookControls: View {
 
             ConsoleSegmented(options: ButtonAppearance.Typeface.allCases, selection: $appearance.typeface, height: 50) { face in
                 VStack(spacing: 2) {
-                    Text("Aa").font(.system(size: 17, weight: .semibold, design: face.design))
-                    Text(face.name).font(.system(size: 10, weight: .medium))
+                    Text("Aa").font(.system(size: 17, weight: .bold, design: face.design))
+                    Text(face.name).font(.system(size: 10, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -528,10 +552,10 @@ struct ButtonLookControls: View {
                 .accessibilityLabel("Text size")
                 TextField("Caption (optional)", text: $appearance.caption)
                     .padding(.horizontal, 10)
-                    .frame(height: 32)
+                    .frame(height: 34)
                     .background(Theme.well, in: RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).strokeBorder(Theme.inkBorder, lineWidth: 1.5)
                     }
                     .accessibilityIdentifier("caption")
             }
@@ -557,7 +581,7 @@ private struct StepEditorSheet: View {
             case .recorded: EmptyView()
             }
         }
-        .tint(Theme.amber)
+        .tint(Theme.tint)
     }
 }
 
@@ -586,7 +610,7 @@ private struct TextStepEditor: View {
                     if !untypable.isEmpty {
                         Label("A US keyboard cannot type \(String(untypable)); they are left out.",
                               systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(Theme.amber)
+                            .foregroundStyle(Theme.highlightLabel)
                     }
                 }
             }
@@ -632,11 +656,8 @@ private struct ShortcutStepEditor: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 ChordView(chord: KeyChord(usage, modifiers), large: true)
-                    .frame(maxWidth: .infinity, minHeight: 64)
-                    .background(Theme.well, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
-                    }
+                    .frame(maxWidth: .infinity, minHeight: 68)
+                    .comicPanel(fill: Theme.well, cornerRadius: 12, borderWidth: 2, shadowOffset: 3)
 
                 SectionLabel(text: "Hold")
                 HStack(spacing: 8) {
@@ -645,8 +666,7 @@ private struct ShortcutStepEditor: View {
                         Button(name) {
                             if on { modifiers.subtract(Self.both(modifier)) } else { modifiers.insert(modifier) }
                         }
-                        .buttonStyle(ConsoleTileButtonStyle(size: 44, active: on))
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(ConsoleTileButtonStyle(size: 44, active: on, fullWidth: true))
                         .accessibilityAddTraits(on ? .isSelected : [])
                     }
                 }
@@ -656,6 +676,12 @@ private struct ShortcutStepEditor: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     ConsoleSegmented(options: KeyGroup.allCases, selection: $group) { Text($0.title) }
                 }
+                .mask {
+                    HStack(spacing: 0) {
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 14)
+                    }
+                }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: group.minimumWidth), spacing: 8)], spacing: 8) {
                     ForEach(group.keys, id: \.self) { key in
                         let on = key == usage
@@ -663,17 +689,12 @@ private struct ShortcutStepEditor: View {
                             usage = key
                         } label: {
                             Text(MacroDescription.keyName(key))
-                                .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                                .foregroundStyle(on ? Theme.amberLabel : Theme.text)
+                                .font(.system(size: 15, weight: .bold, design: .monospaced))
+                                .foregroundStyle(on ? Theme.popInk : Theme.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity, minHeight: 44)
-                                .background(on ? Theme.amber.opacity(0.15) : Theme.raised,
-                                            in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .strokeBorder(on ? Theme.amber : Theme.hairline, lineWidth: on ? 2 : 1)
-                                }
+                                .comicPanel(fill: on ? Theme.popYellow : Theme.surface, cornerRadius: 9, borderWidth: 2, shadowOffset: 2)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(MacroDescription.keyName(key))
@@ -684,7 +705,12 @@ private struct ShortcutStepEditor: View {
             }
             .padding(Theme.margin)
         }
-        .background(Theme.ground)
+        .background {
+            ZStack {
+                Theme.ground.ignoresSafeArea()
+                HalftoneBackground().ignoresSafeArea()
+            }
+        }
         .navigationTitle("Shortcut")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -753,8 +779,8 @@ private struct PauseStepEditor: View {
         Form {
             Section {
                 Text(String(format: "%.2f s", Double(ms) / 1000))
-                    .font(.system(size: 40, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Theme.amberLabel)
+                    .font(.system(size: 42, weight: .black, design: .rounded))
+                    .foregroundStyle(Theme.highlightLabel)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .contentTransition(.numericText())
@@ -763,8 +789,7 @@ private struct PauseStepEditor: View {
                         Button(preset >= 1000 ? "\(preset / 1000) s" : String(format: "%.2g s", Double(preset) / 1000)) {
                             withAnimation { ms = preset }
                         }
-                        .buttonStyle(ConsoleTileButtonStyle(size: 40, active: ms == preset))
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(ConsoleTileButtonStyle(size: 40, active: ms == preset, fullWidth: true))
                     }
                 }
                 .padding(.vertical, 4)

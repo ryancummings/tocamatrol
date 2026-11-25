@@ -53,17 +53,27 @@ private struct EmptyPadView: View {
     let onManage: () -> Void
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 16) {
             Spacer()
-            Image(systemName: "square.grid.3x3.fill")
-                .font(.system(size: 36))
-                .foregroundStyle(Theme.amber.opacity(0.8))
+            ZStack {
+                Circle()
+                    .fill(Theme.inkShadow)
+                    .frame(width: 72, height: 72)
+                    .offset(x: 3, y: 4)
+                Circle()
+                    .fill(Theme.popYellow)
+                    .overlay { Circle().strokeBorder(Theme.popInk, lineWidth: 2.5) }
+                    .frame(width: 72, height: 72)
+                Image(systemName: "square.grid.3x3.fill")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(Theme.popInk)
+            }
             Text("No macro pages yet")
-                .font(.title3.weight(.semibold))
+                .font(.system(.title3, design: .rounded, weight: .heavy))
                 .foregroundStyle(Theme.text)
             Text("Create a page to arrange custom macro buttons for your computer.")
                 .font(.subheadline)
-                .foregroundStyle(Theme.dim)
+                .foregroundStyle(Theme.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 320)
             Button("Manage Pages & Macros", action: onManage)
@@ -88,13 +98,13 @@ private struct PageTabs: View {
                 }
             }
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-            .frame(height: height)
+            .frame(height: height + 4)
             // Fade the ends, so a tab cut by the edge reads as scrolled, not broken.
             .mask {
                 HStack(spacing: 0) {
-                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: 12)
+                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: 10)
                     Color.black
-                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 12)
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 10)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -112,8 +122,8 @@ struct PadArea<Grid: View>: View {
     @ViewBuilder let grid: () -> Grid
 
     /// Tallest key aspect ratio (height / width).
-    static var maxAspect: CGFloat { ScreenMetrics.isPad ? 1.15 : 1.15 }
-    private static var readoutMinimum: CGFloat { 64 }
+    static var maxAspect: CGFloat { 1.15 }
+    private static var readoutMinimum: CGFloat { 70 }
 
     static func gridSize(for shape: GridShape, in available: CGSize) -> CGSize {
         let spacing = Theme.padSpacing
@@ -163,55 +173,61 @@ final class PadReadout: ObservableObject {
     }
 }
 
-/// The console readout under the keys: the last macro sent, and the link.
+/// The comic panel readout under the keys: the last macro sent and dongle status.
 private struct ReadoutPanel: View {
     @EnvironmentObject private var readout: PadReadout
     @EnvironmentObject private var link: DongleLink
 
     var body: some View {
+        let failed = readout.last?.sent == false
         HStack(alignment: .top, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                SectionLabel(text: readout.last?.sent == false ? "Not sent" : "Last sent",
-                             color: readout.last?.sent == false ? Theme.red : Theme.amber.opacity(0.7))
+                SectionLabel(
+                    text: failed ? "Not sent" : "Last sent",
+                    color: failed ? Theme.red : Theme.popYellow,
+                    foreground: failed ? .white : Theme.popInk
+                )
                 if let last = readout.last {
                     Text(last.title)
-                        .font(.system(size: ScreenMetrics.isPad ? 26 : 20, weight: .semibold))
-                        .foregroundStyle(last.sent ? Theme.amberLabel : Theme.red)
-                        .shadow(color: Theme.amber.opacity(last.sent ? 0.35 : 0), radius: 6)
+                        .font(.system(size: ScreenMetrics.isPad ? 26 : 20, weight: .black, design: .rounded))
+                        .foregroundStyle(last.sent ? Theme.highlightLabel : Theme.red)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                     Text(last.sent ? (last.detail ?? " ") : notSentMessage)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                 } else {
                     Text("Ready")
-                        .font(.system(size: ScreenMetrics.isPad ? 26 : 20, weight: .semibold))
-                        .foregroundStyle(Theme.dim)
+                        .font(.system(size: ScreenMetrics.isPad ? 26 : 20, weight: .black, design: .rounded))
+                        .foregroundStyle(Theme.text)
                     Text(link.state == .noDongle ? "Tap Dongle above to pair an ESP32-S3 dongle." : "Macros fire on touch.")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(Theme.dim)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Theme.muted)
                 }
             }
             Spacer(minLength: 0)
             VStack(alignment: .trailing, spacing: 6) {
-                SectionLabel(text: "Link", color: Theme.dim)
+                SectionLabel(text: "Link", color: Theme.raised, foreground: Theme.text)
                 HStack(spacing: 6) {
-                    RoundedRectangle(cornerRadius: 1).fill(link.state.color).frame(width: 7, height: 7)
-                    Text(link.state.title).font(.system(size: 13, weight: .medium))
+                    Circle()
+                        .fill(link.state.color)
+                        .overlay { Circle().strokeBorder(Theme.popInk, lineWidth: 1.5) }
+                        .frame(width: 9, height: 9)
+                    Text(link.state.title)
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
                 .foregroundStyle(Theme.text)
                 if link.state == .ready, let rssi = link.rssi {
-                    Text("\(rssi) dBm").font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.muted)
+                    Text("\(rssi) dBm")
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.muted)
                 }
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.well, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
-        }
+        .comicPanel(fill: Theme.surface, cornerRadius: 12, borderWidth: 2, shadowOffset: 3)
         .accessibilityElement(children: .combine)
     }
 
@@ -220,17 +236,25 @@ private struct ReadoutPanel: View {
     }
 }
 
-/// A console section label: mono, dim amber, after "// ".
+/// Bold comic section stamp label used across panels and grouped forms.
 struct SectionLabel: View {
     let text: String
-    var color: Color = Theme.amber.opacity(0.7)
+    var color: Color = Theme.popYellow
+    var foreground: Color = Theme.popInk
 
     var body: some View {
-        Text("// \(text)")
-            .font(.system(size: 11, weight: .medium, design: .monospaced))
-            .tracking(1.3)
+        Text(text)
+            .font(.system(size: 11, weight: .black, design: .rounded))
+            .tracking(0.8)
             .textCase(.uppercase)
-            .foregroundStyle(color)
+            .foregroundStyle(foreground)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(color, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(Theme.inkBorder, lineWidth: 1.5)
+            }
     }
 }
 
@@ -342,6 +366,7 @@ private struct AssignMacroView: View {
                         creating = true
                     } label: {
                         Label("New Macro…", systemImage: "plus")
+                            .fontWeight(.semibold)
                     }
                 }
                 .consoleRows()
@@ -371,6 +396,7 @@ private struct AssignMacroView: View {
                 }
             }
         }
+        .tint(Theme.tint)
         .sheet(isPresented: $creating, onDismiss: { if created { dismiss() } }) {
             NavigationStack {
                 MacroEditorView(original: nil) { macro in
@@ -379,7 +405,7 @@ private struct AssignMacroView: View {
                     created = true
                 }
             }
-            .tint(Theme.amber)
+            .tint(Theme.tint)
         }
     }
 }

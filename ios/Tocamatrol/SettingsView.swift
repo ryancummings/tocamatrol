@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: MacroStore
 
+    @AppStorage(SettingsKey.appearanceMode) private var appearanceMode = AppearanceMode.system
     @AppStorage(SettingsKey.pointerSpeed) private var pointerSpeed = InputSettings().pointerSpeed
     @AppStorage(SettingsKey.pointerAcceleration) private var pointerAcceleration = InputSettings().pointerAcceleration
     @AppStorage(SettingsKey.scrollSpeed) private var scrollSpeed = InputSettings().scrollSpeed
@@ -29,6 +30,24 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack {
+                        Text("Theme")
+                            .foregroundStyle(Theme.text)
+                        Spacer()
+                        ConsoleSegmented(options: AppearanceMode.allCases, selection: $appearanceMode) { mode in
+                            Text(mode.label)
+                        }
+                        .fixedSize()
+                    }
+                } header: {
+                    SectionLabel(text: "Appearance")
+                } footer: {
+                    Text("Auto follows iOS Dark Mode. Paper uses warm comic newsprint; Midnight uses electric indigo.")
+                        .foregroundStyle(Theme.dim)
+                }
+                .consoleRows()
+
                 Section {
                     slider("Pointer speed", value: $pointerSpeed, in: 0.5...3, format: "%.1f×")
                     slider("Pointer acceleration", value: $pointerAcceleration, in: 1...12, format: "%.1f× when fast")
@@ -56,7 +75,7 @@ struct SettingsView: View {
                 .consoleRows()
             }
             .consoleForm()
-            .tint(Theme.amber)
+            .tint(Theme.tint)
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -162,7 +181,7 @@ struct SettingsView: View {
             LabeledContent("Version") {
                 Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
                     .font(.subheadline.monospaced())
-                    .foregroundStyle(Theme.dim)
+                    .foregroundStyle(Theme.muted)
             }
         } header: {
             SectionLabel(text: "Hardware & About")
@@ -175,8 +194,8 @@ struct SettingsView: View {
             Label(title, systemImage: systemImage)
             Spacer()
             Image(systemName: "arrow.up.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.dim)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Theme.muted)
         }
     }
 
@@ -187,8 +206,8 @@ struct SettingsView: View {
                 Text(title)
                 Spacer()
                 Text(String(format: format, value.wrappedValue))
-                    .font(.subheadline.monospaced())
-                    .foregroundStyle(Theme.amberLabel)
+                    .font(.subheadline.weight(.semibold).monospaced())
+                    .foregroundStyle(Theme.highlightLabel)
             }
             Slider(value: value, in: range)
         }

@@ -37,8 +37,13 @@ struct ContentView: View {
         // Edge swipes reach the keys and trackpad first; the system gesture needs a second swipe.
         .defersSystemGestures(on: .all)
         .persistentSystemOverlays(ScreenMetrics.isPad ? .hidden : .automatic)
-        .background(Theme.ground.ignoresSafeArea())
-        .tint(Theme.amber)
+        .background {
+            ZStack {
+                Theme.ground.ignoresSafeArea()
+                HalftoneBackground().ignoresSafeArea()
+            }
+        }
+        .tint(Theme.tint)
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(isPresented: $showConnections) { ConnectionManagerView() }
         .onAppear { controller.apply(settings) }
@@ -47,11 +52,25 @@ struct ContentView: View {
 
     private var trackpad: some View {
         TrackpadView(controller: controller)
+            .background {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Theme.inkShadow)
+                    .offset(x: 3, y: 4)
+            }
+            .padding(.trailing, 3)
+            .padding(.bottom, 4)
             .overlay(alignment: .bottom) {
                 Text("1 finger moves · tap clicks · tap-hold drags\n2 fingers scroll · 2-finger tap right-clicks · 3-finger middle-clicks")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Theme.dim.opacity(0.75))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Theme.muted)
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Theme.surface.opacity(0.94), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .strokeBorder(Theme.inkBorder, lineWidth: 1.5)
+                    }
                     .padding(16)
                     .allowsHitTesting(false)
             }
@@ -87,7 +106,7 @@ private struct TopBar: View {
             Button {
                 showSettings = true
             } label: {
-                Image(systemName: "gearshape")
+                Image(systemName: "gearshape.fill")
             }
             .buttonStyle(ConsoleTileButtonStyle())
             .accessibilityLabel("Settings")
@@ -96,7 +115,7 @@ private struct TopBar: View {
     }
 }
 
-/// The dongle in use: a status light, its code on the iPhone, and on the iPad its name and signal.
+/// The dongle in use: an ink-ringed status light, its code on iPhone, and its name + signal on iPad.
 private struct ConnectionChip: View {
     let state: DongleLink.State
     /// "Tocamatrol A1B2"; nil when no dongle is chosen.
@@ -105,23 +124,22 @@ private struct ConnectionChip: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 1.5).fill(state.color).frame(width: 7, height: 7)
-                .shadow(color: state.color.opacity(0.7), radius: 3)
+            Circle()
+                .fill(state.color)
+                .overlay { Circle().strokeBorder(Theme.popInk, lineWidth: 1.5) }
+                .frame(width: 9, height: 9)
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundStyle(Theme.text)
                 .lineLimit(1)
             if ScreenMetrics.isPad, state == .ready, let rssi {
-                Text("\(rssi) dBm").font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.dim)
+                Text("\(rssi) dBm").font(.system(size: 12, weight: .semibold, design: .monospaced)).foregroundStyle(Theme.muted)
             }
-            Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.dim)
+            Image(systemName: "chevron.down").font(.system(size: 10, weight: .black)).foregroundStyle(Theme.text)
         }
         .padding(.horizontal, 10)
-        .frame(height: 32)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1)
-        }
+        .frame(height: 34)
+        .comicPanel(fill: Theme.surface, cornerRadius: Theme.radius, borderWidth: 2, shadowOffset: 2)
         .fixedSize()
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
@@ -146,8 +164,9 @@ private struct DebugOverlay: View {
             Text("packets/s: \(controller.stats.packetsPerSecond)")
         }
         .font(.caption.monospaced())
+        .foregroundStyle(Theme.text)
         .padding(8)
-        .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
+        .comicPanel(fill: Theme.surface.opacity(0.95), cornerRadius: 8, borderWidth: 1.5, shadowOffset: 2)
         .allowsHitTesting(false)
     }
 }

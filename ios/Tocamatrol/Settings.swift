@@ -1,3 +1,4 @@
+import SwiftUI
 import TocaCore
 
 /// Every user setting, persisted with @AppStorage under these keys.
@@ -9,6 +10,7 @@ enum SettingsKey {
     static let scrollCoast = "scrollCoast"
     static let naturalScroll = "naturalScroll"
     static let showDebug = "showDebug"
+    static let appearanceMode = "appearanceMode"
     /// Macro pad or trackpad (InputMode).
     static let inputMode = "inputMode"
     static let macroPage = "macroPage"
@@ -17,6 +19,29 @@ enum SettingsKey {
     /// Biometric/passcode lock and how long the app may be away before it locks again.
     static let requireUnlock = "requireUnlock"
     static let unlockDelay = "unlockDelay"
+}
+
+/// Color appearance preference: follows iOS, Bright Newsprint (light), or Dark Electric Comic (dark).
+enum AppearanceMode: String, CaseIterable, Identifiable {
+    case system, light, dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: "Auto"
+        case .light: "Paper"
+        case .dark: "Midnight"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
 }
 
 /// What the screen is: the macro pad or the trackpad.

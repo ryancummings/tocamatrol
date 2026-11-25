@@ -5,6 +5,7 @@ struct TocamatrolApp: App {
     @StateObject private var controller = InputController()
     @StateObject private var macros = MacroStore()
     @StateObject private var lock = AppLock()
+    @AppStorage(SettingsKey.appearanceMode) private var appearanceMode = AppearanceMode.system
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -26,7 +27,7 @@ struct TocamatrolApp: App {
                         LockCover().environmentObject(lock)
                     }
                 }
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(appearanceMode.colorScheme)
         }
         .onChange(of: scenePhase) { _, phase in
             let active = phase == .active
