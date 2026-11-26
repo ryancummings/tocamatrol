@@ -5,6 +5,7 @@ import XCTest
 final class ScreenshotCatalogUITests: XCTestCase {
     private static let quickPage = "0CA7E000-0000-4000-8000-000000000001"
     private static let devPage = "0CA7E000-0000-4000-8000-000000000002"
+    private static let deckPage = "0CA7E000-0000-4000-8000-000000000003"
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -24,6 +25,14 @@ final class ScreenshotCatalogUITests: XCTestCase {
         let app = launch(page: Self.devPage)
         XCTAssertTrue(app.buttons["Open Terminal"].waitForExistence(timeout: 5))
         capture("02_WorkspacePage")
+    }
+
+    /// A full 7x4 page of small keys, for the App Store header art (creative_assets.py).
+    @MainActor
+    func testDenseDeck() {
+        let app = launch(page: Self.deckPage, extraArguments: ["-UITestDenseDeck"])
+        XCTAssertTrue(app.buttons["Switch App"].waitForExistence(timeout: 5))
+        capture("11_DenseDeck")
     }
 
     @MainActor
@@ -278,10 +287,11 @@ final class ScreenshotCatalogUITests: XCTestCase {
     // MARK: - Helpers
 
     @MainActor @discardableResult
-    private func launch(page: String, settings: [String: String] = [:]) -> XCUIApplication {
+    private func launch(page: String, settings: [String: String] = [:],
+                        extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         setupSnapshot(app)
-        app.launchArguments += ["-UITestMode", "-UITestResetState"]
+        app.launchArguments += ["-UITestMode", "-UITestResetState"] + extraArguments
         let defaults = ["macroPage": page, "inputMode": "keys"].merging(settings) { $1 }
         for (key, value) in defaults.sorted(by: { $0.key < $1.key }) {
             app.launchArguments += ["-UITestDefault:\(key)", value]

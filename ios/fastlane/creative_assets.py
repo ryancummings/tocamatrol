@@ -79,14 +79,14 @@ h1 {{ font-family:"Archivo Black", sans-serif; font-weight:400; text-transform:u
 
 
 def header(work: Path) -> tuple[int, int, str]:
-    # The macro pad on iPad in the middle of the safe area, the macro editor on iPhone to the left,
+    # A full deck of keys on iPad (testDenseDeck) in the middle of the safe area, the macro editor on iPhone to the left,
     # and the dongle to the right, so the whole setup reads at a glance. Devices bleed off the
     # bottom, where the store lays its name, icon and Get button.
     w, h = 3840, 1646
     ipad_w = 1560
     body = (
         device(shot("06_MacroEditor", False, work), 520, 330, 560, False, rotate=-7, z=1)
-        + device(shot("01_MacroPad", True, work), (w - ipad_w) // 2 - 80, 300, ipad_w, True, z=2)
+        + device(shot("11_DenseDeck", True, work), (w - ipad_w) // 2 - 80, 300, ipad_w, True, z=2)
         + dongle(2780, 620, 960, rotate=-10)
     )
     return w, h, page(w, h, body, "#FFD83D", "#FFF2A6")

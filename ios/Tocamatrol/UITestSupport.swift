@@ -33,6 +33,9 @@ enum UITestSupport {
     /// Fixed IDs, so tests can open a page with `-UITestDefault:macroPage <id>`.
     static let quickPage = UUID(uuidString: "0CA7E000-0000-4000-8000-000000000001")!
     static let devPage = UUID(uuidString: "0CA7E000-0000-4000-8000-000000000002")!
+    /// A full 7x4 deck for the iPad promo art; added only with `-UITestDenseDeck`, so the
+    /// other screenshots keep their two pages.
+    static let deckPage = UUID(uuidString: "0CA7E000-0000-4000-8000-000000000003")!
 
     static var library: MacroLibrary {
         let copy = Macro(name: "Copy", speed: .instant, actions: [.shortcut(KeyChord(0x06, .leftControl))])
@@ -74,8 +77,70 @@ enum UITestSupport {
         dev.setAppearance(ButtonAppearance(tint: .teal, typeface: .rounded), at: Cell(0, 1))
         dev.setAppearance(ButtonAppearance(tint: .rose, typeface: .rounded, textSize: .large), at: Cell(1, 1))
 
-        return MacroLibrary(macros: [terminal, copy, paste, undo, saveAll, screenshot, comment, snippet, lockPC],
-                            pages: [quick, dev])
+        var macros = [terminal, copy, paste, undo, saveAll, screenshot, comment, snippet, lockPC]
+        var pages = [quick, dev]
+        if ProcessInfo.processInfo.arguments.contains("-UITestDenseDeck") {
+            let (deckMacros, deck) = denseDeck(copy: copy, paste: paste, screenshot: screenshot, lockPC: lockPC)
+            macros += deckMacros
+            pages.append(deck)
+        }
+        return MacroLibrary(macros: macros, pages: pages)
+    }
+
+    private typealias Key = (name: String, chord: KeyChord, caption: String, tint: ButtonAppearance.Tint)
+
+    /// 7 columns x 4 rows of everyday shortcuts, every cell filled.
+    private static func denseDeck(copy: Macro, paste: Macro, screenshot: Macro,
+                                  lockPC: Macro) -> ([Macro], MacroPage) {
+        let ctrl = KeyModifiers.leftControl, shift = KeyModifiers.leftShift
+        let gui = KeyModifiers.leftGUI, alt = KeyModifiers.leftAlt
+        let rows: [[Key]] = [
+            [("Cut", KeyChord(0x1B, ctrl), "Ctrl+X", .blue),
+             ("Redo", KeyChord(0x1C, ctrl), "Ctrl+Y", .sand),
+             ("Find", KeyChord(0x09, ctrl), "Ctrl+F", .teal),
+             ("Save", KeyChord(0x16, ctrl), "Ctrl+S", .green),
+             ("Select All", KeyChord(0x04, ctrl), "Ctrl+A", .sand)],
+            [("New Tab", KeyChord(0x17, ctrl), "Ctrl+T", .violet),
+             ("Close Tab", KeyChord(0x1A, ctrl), "Ctrl+W", .violet),
+             ("Reopen Tab", KeyChord(0x17, [ctrl, shift]), "Ctrl+⇧T", .violet),
+             ("Prev Tab", KeyChord(0x2B, [ctrl, shift]), "Ctrl+⇧Tab", .graphite),
+             ("Next Tab", KeyChord(0x2B, ctrl), "Ctrl+Tab", .graphite),
+             ("Zoom In", KeyChord(0x2E, ctrl), "Ctrl+=", .amber),
+             ("Zoom Out", KeyChord(0x2D, ctrl), "Ctrl+-", .amber)],
+            [("Mute Mic", KeyChord(0x10, [ctrl, shift]), "Ctrl+⇧M", .rose),
+             ("Camera", KeyChord(0x08, [ctrl, shift]), "Ctrl+⇧E", .rose),
+             ("Desktop", KeyChord(0x07, gui), "Win+D", .graphite),
+             ("Search", KeyChord(0x2C, gui), "Win+Space", .teal),
+             ("Emoji", KeyChord(0x37, gui), "Win+.", .amber),
+             ("Task View", KeyChord(0x2B, gui), "Win+Tab", .graphite),
+             ("Switch App", KeyChord(0x2B, alt), "Alt+Tab", .graphite)],
+            [("Refresh", KeyChord(0x3E), "F5", .teal),
+             ("Full Screen", KeyChord(0x44), "F11", .teal),
+             ("Rename", KeyChord(0x3B), "F2", .sand),
+             ("History", KeyChord(0x0B, ctrl), "Ctrl+H", .violet),
+             ("Print", KeyChord(0x13, ctrl), "Ctrl+P", .sand)],
+        ]
+        var deck = MacroPage(id: deckPage, title: "Everyday", shape: GridShape(columns: 7, rows: 4))
+        var made: [Macro] = []
+        func place(_ macro: Macro, _ column: Int, _ row: Int, _ look: ButtonAppearance) {
+            deck.assign(macro.id, at: Cell(column, row))
+            deck.setAppearance(look, at: Cell(column, row))
+        }
+        // The first row opens with the Quick Actions basics.
+        place(copy, 0, 0, ButtonAppearance(tint: .blue, caption: "Ctrl+C"))
+        place(paste, 1, 0, ButtonAppearance(tint: .blue, caption: "Ctrl+V"))
+        for (row, keys) in rows.enumerated() {
+            var column = row == 0 ? 2 : 0
+            for key in keys {
+                let macro = Macro(name: key.name, speed: .instant, actions: [.shortcut(key.chord)])
+                made.append(macro)
+                place(macro, column, row, ButtonAppearance(tint: key.tint, caption: key.caption))
+                column += 1
+            }
+        }
+        place(screenshot, 5, 3, ButtonAppearance(tint: .violet, caption: "Win+⇧S"))
+        place(lockPC, 6, 3, ButtonAppearance(tint: .rust, caption: "Win+L"))
+        return (made, deck)
     }
 }
 #endif

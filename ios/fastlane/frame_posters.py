@@ -53,9 +53,11 @@ DONGLE_SVG = """
   <rect x="20" y="118" width="230" height="164" rx="10" fill="#D9DDE2" stroke="#151311" stroke-width="10"/>
   <rect x="20" y="118" width="230" height="40" rx="8" fill="#F4F6F8"/>
   <rect x="20" y="118" width="230" height="164" rx="10" fill="none" stroke="#151311" stroke-width="10"/>
-  <rect x="62" y="172" width="44" height="30" rx="4" fill="#151311"/>
-  <rect x="150" y="172" width="44" height="30" rx="4" fill="#151311"/>
-  <rect x="44" y="226" width="186" height="34" rx="6" fill="#B8BEC6" stroke="#151311" stroke-width="6"/>
+  <!-- top face of the metal shell: the two latch holes sit side by side across its width,
+       near the tip; the plastic tongue is hidden inside -->
+  <rect x="56" y="146" width="40" height="38" rx="4" fill="#151311"/>
+  <rect x="56" y="216" width="40" height="38" rx="4" fill="#151311"/>
+  <line x1="150" y1="130" x2="150" y2="270" stroke="#9AA1AA" stroke-width="6" stroke-linecap="round"/>
   <!-- body -->
   <rect x="210" y="40" width="780" height="320" rx="62" fill="#2B2724" stroke="#151311" stroke-width="10"/>
   <rect x="232" y="60" width="736" height="72" rx="40" fill="#3E3934"/>
