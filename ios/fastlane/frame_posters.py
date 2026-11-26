@@ -22,18 +22,18 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SLIDES = [
     ("01", "MacroPad", "01_MacroPad", "CUSTOM MACRO PAD",
      "Resize, color, and arrange buttons for any workflow", "#FFD83D", "#FFF2A6"),
-    ("02", "Trackpad", "10_Trackpad", "MAGIC TRACKPAD MODE",
-     "Smooth pointer, two-finger scroll, tap and drag", "#45E3F7", "#B8F7FF"),
-    ("03", "PageEditor", "05_PageEditor", "BUILD YOUR OWN GRID",
-     "Drag to reorder and stretch keys up to 8×6", "#FF7AC3", "#FFC7E6"),
-    ("04", "MacroEditor", "06_MacroEditor", "MULTI-STEP MACROS",
-     "Type text, fire shortcuts, and time every pause", "#4FE36E", "#B8F8C6"),
-    ("05", "Workspace", "02_WorkspacePage", "PAGES FOR EVERY APP",
-     "Switch layouts in a tap — zero PC software", "#FF9E3D", "#FFD6AA"),
-    ("06", "Connections", "08_Connections", "ZERO-DRIVER USB DONGLE",
-     "Bonded BLE to any Mac, Windows, or Linux PC", "#5AA8FF", "#BFE0FF"),
-    ("07", "Hardware", None, "REQUIRES A USB DONGLE",
+    ("02", "Hardware", None, "REQUIRES A USB DONGLE",
      "Tocamatrol talks to your PC through a small ESP32-S3 stick", "#B98CFF", "#E3D2FF"),
+    ("03", "Trackpad", "10_Trackpad", "MAGIC TRACKPAD MODE",
+     "Smooth pointer, two-finger scroll, tap and drag", "#45E3F7", "#B8F7FF"),
+    ("04", "PageEditor", "05_PageEditor", "BUILD YOUR OWN GRID",
+     "Drag to reorder and stretch keys up to 8×6", "#FF7AC3", "#FFC7E6"),
+    ("05", "MacroEditor", "06_MacroEditor", "MULTI-STEP MACROS",
+     "Type text, fire shortcuts, and time every pause", "#4FE36E", "#B8F8C6"),
+    ("06", "Workspace", "02_WorkspacePage", "PAGES FOR EVERY APP",
+     "Switch layouts in a tap — zero PC software", "#FF9E3D", "#FFD6AA"),
+    ("07", "Connections", "08_Connections", "ZERO-DRIVER USB DONGLE",
+     "Bonded BLE to any Mac, Windows, or Linux PC", "#5AA8FF", "#BFE0FF"),
 ]
 
 FLASHER_URL = "ryancummings.github.io/tocamatrol"
@@ -352,6 +352,9 @@ def main() -> None:
     rubik_b64 = b64(fonts_dir / "rubik-latin.woff2")
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    # Drop posters from an earlier slide order, so deliver never stages a stale file.
+    for stale in [*args.out_dir.glob("*_iphone69_*.png"), *args.out_dir.glob("*_ipad13_*.png")]:
+        stale.unlink()
     args.contact_dir.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory(prefix="toca-posters-") as tmp:

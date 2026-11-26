@@ -15,6 +15,7 @@ release_helpers = File.join(skill, "scripts", "fastlane", "release_helpers")
 screenshot_sync_helper = File.join(skill, "scripts", "fastlane", "screenshot_sync")
 require release_helpers if File.exist?("#{release_helpers}.rb")
 require screenshot_sync_helper if File.exist?("#{screenshot_sync_helper}.rb")
+require_relative "creative_assets"
 
 # Fallback if release_helpers wasn't loaded: ensure Apple /usr/bin/rsync precedes Homebrew rsync.
 unless defined?(OneRadStoreRelease) && OneRadStoreRelease.respond_to?(:ensure_apple_rsync_path!)
@@ -151,6 +152,32 @@ platform :ios do
   desc "Render Ink & Pop comic App Store posters from fastlane/screenshots/en-US into fastlane/deliver_screenshots/en-US."
   lane :frame_posters do
     sh("python3", File.join(FASTLANE_DIR, "frame_posters.py"))
+  end
+
+  desc "Render the iOS 27 creative assets (product page header 21:9, search results 3:2) into " \
+       "fastlane/creative and place them on the editable version's en-US page via the Asset " \
+       "Library API. Idempotent. render:false uploads the existing files as they are."
+  lane :creative_assets do |options|
+    sh("python3", File.join(FASTLANE_DIR, "creative_assets.py")) unless options[:render] == false
+    asc = require_asc_release!
+    version = asc.editable_version(required: true)
+    creative = File.join(FASTLANE_DIR, "creative")
+    results = CreativeAssets.sync!(
+      app_id: asc.app.id,
+      version_id: version.id,
+      ui: UI,
+      jobs: [
+        { file: File.join(creative, "header_21x9.png"), placement_type: "PRODUCT_PAGE_HEADER_ASSET",
+          label: "Tocamatrol header #{version.version_string}" },
+        { file: File.join(creative, "search_3x2.png"), placement_type: "APP_STORE_SEARCH_RESULTS_ASSET",
+          label: "Tocamatrol search results #{version.version_string}" }
+      ]
+    )
+    results.each do |r|
+      UI.message("#{r[:placement]}: #{r[:file]} #{r[:size]} image=#{r[:image_state]} placements=#{r[:count]}")
+    end
+    UI.user_error!("Creative assets did not converge: #{results.reject { |r| r[:ok] }}") unless results.all? { |r| r[:ok] }
+    UI.success("Creative assets verified on #{version.version_string} (en-US).")
   end
 
   desc "Reconcile App Store Connect screenshots with fastlane/deliver_screenshots (idempotent)."

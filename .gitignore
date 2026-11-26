@@ -29,4 +29,5 @@ ios/build/
 ios/fastlane/screenshots/
 ios/fastlane/framed/
 ios/fastlane/deliver_screenshots/
+ios/fastlane/creative/
 ios/fastlane/test_output/
