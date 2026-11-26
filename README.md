@@ -3,6 +3,10 @@
 Tocamatrol turns your iPhone or iPad into a customizable macro pad and wireless trackpad for
 any PC, Mac, or Linux machine—with **no drivers or software to install** on the computer.
 
+[![How Tocamatrol works: a macro tap travels from the phone over Bluetooth to the dongle, which types it on the PC as a USB keyboard](web/public/media/tocamatrol-how-it-works-poster.jpg)](https://ryancummings.github.io/tocamatrol/media/tocamatrol-how-it-works.mp4)
+
+<sub>▶ Click the image to watch the 14-second demo. The source is in [`tools/promo_video/`](tools/promo_video).</sub>
+
 ```
 iPhone / iPad app ──BLE (bonded, encrypted)──▶ ESP32-S3 USB dongle ──USB HID mouse + keyboard──▶ PC / Mac / Linux
 ```
@@ -34,7 +38,7 @@ iPhone / iPad app ──BLE (bonded, encrypted)──▶ ESP32-S3 USB dongle ─
 | [`dongle/`](dongle) | ESP32-S3 firmware (PlatformIO, Arduino, NimBLE-Arduino, TinyUSB HID). |
 | [`ios/`](ios) | SwiftUI iOS/iPadOS app (iOS 17+), XcodeGen project, `TocaCore` Swift package. |
 | [`web/`](web) | Static web flasher (`esptool-js`), compatible hardware guide, and pairing docs. |
-| [`tools/`](tools) | Python BLE test sender (`send_test.py`) and Linux HID event watcher (`watch_hid.py`). |
+| [`tools/`](tools) | Python BLE test sender (`send_test.py`), Linux HID event watcher (`watch_hid.py`), and the how-it-works promo video and App Store art source (`promo_video/`). |
 | [`GLOSSARY.md`](GLOSSARY.md), [`docs/adr/`](docs/adr) | Domain terms and architecture decision records. |
 
 ## Compatible Hardware (ESP32-S3 only)

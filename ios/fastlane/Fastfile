@@ -201,6 +201,47 @@ platform :ios do
     UI.success("Creative assets verified on #{version.version_string} (en-US).")
   end
 
+  desc "Withdraw the in-progress App Review submission (waiting or in review) so the version " \
+       "becomes editable again. Does not resubmit."
+  lane :cancel_review do
+    app = require_asc_release!.app
+    submission = app.get_in_progress_review_submission(platform: Spaceship::ConnectAPI::Platform::IOS)
+    UI.user_error!("No iOS review submission is waiting or in review") if submission.nil?
+    UI.message("Cancelling review submission #{submission.id} (#{submission.state})")
+    submission.cancel_submission
+    state = nil
+    24.times do
+      state = Spaceship::ConnectAPI::ReviewSubmission.get(review_submission_id: submission.id).state
+      break unless state == Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::CANCELING
+      sleep 5
+    end
+    version = require_asc_release!.editable_version
+    UI.important("Submission #{submission.id}: #{state}; version #{version&.version_string} #{version&.app_store_state}")
+    UI.user_error!("Submission did not finish cancelling (#{state})") unless state == "COMPLETE"
+  end
+
+  desc "Submit the editable version for App Review (explicit only: run it on purpose). " \
+       "Requires version: to match the editable version, which must have a build attached."
+  lane :submit_review do |options|
+    asc = require_asc_release!
+    version = asc.editable_version(required: true)
+    unless options[:version].to_s == version.version_string
+      UI.user_error!("Pass version:#{version.version_string} to confirm which version goes to review")
+    end
+    build = version.get_build
+    UI.user_error!("No build attached to #{version.version_string}") if build.nil?
+    app = asc.app
+    platform = Spaceship::ConnectAPI::Platform::IOS
+    submission = app.get_ready_review_submission(platform: platform, includes: "items") ||
+                 app.create_review_submission(platform: platform)
+    submission.add_app_store_version_to_review_items(app_store_version_id: version.id) if Array(submission.items).empty?
+    submission.submit_for_review
+    fresh = app.get_in_progress_review_submission(platform: platform)
+    version = Spaceship::ConnectAPI::AppStoreVersion.get(app_store_version_id: version.id)
+    UI.important("Submission #{fresh&.id}: #{fresh&.state}; #{version.version_string} (#{build.version}) #{version.app_store_state}")
+    UI.user_error!("Submission is not waiting for review") unless fresh&.state == "WAITING_FOR_REVIEW"
+  end
+
   desc "Reconcile App Store Connect screenshots with fastlane/deliver_screenshots (idempotent)."
   lane :screenshots_sync do
     sync = new_screenshot_sync

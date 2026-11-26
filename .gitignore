@@ -10,6 +10,7 @@ xcuserdata/
 .build/
 # Web
 web/node_modules/
+tools/promo_video/node_modules/
 web/dist/
 web/public/firmware/*.bin
 *.tsbuildinfo

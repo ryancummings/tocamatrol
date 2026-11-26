@@ -51,7 +51,7 @@ module CreativeAssets
         next verify(loc["id"], job, reference)
       end
 
-      image = upload_image(library_id, job[:file], bytes, reference, ui)
+      image = reusable_image(library_id, reference, ui) || upload_image(library_id, job[:file], bytes, reference, ui)
       current.each { |p| retire(p, ui) }
       api(:post, "v1/appAssetLibraryPlacements", { data: {
         type: "appAssetLibraryPlacements",
@@ -72,6 +72,20 @@ module CreativeAssets
 
   def placement_image(placement)
     api(:get, "v1/appAssetLibraryPlacements/#{placement['id']}?include=image")["included"]&.first
+  end
+
+  # An earlier run may have uploaded this exact file and then failed before placing it.
+  # Reference names are unique per library, so reuse that image instead of uploading again.
+  def reusable_image(library_id, reference, ui)
+    images = api(:get, "v1/appAssetLibraries/#{library_id}/images?limit=200")["data"] || []
+    found = images.find { |i| i.dig("attributes", "referenceName") == reference }
+    return nil unless found
+    if %w[AWAITING_UPLOAD FAILED].include?(found.dig("attributes", "state"))
+      api(:delete, "v1/appAssetLibraryImages/#{found['id']}")
+      return nil
+    end
+    ui.message("#{reference}: reusing unplaced image #{found['id']}")
+    found
   end
 
   def upload_image(library_id, path, bytes, reference, ui)
@@ -110,11 +124,27 @@ module CreativeAssets
     image = placement_image(placement)
     api(:delete, "v1/appAssetLibraryPlacements/#{placement['id']}")
     return unless image
+    deleted = false
     if image.dig("attributes", "state") == "PREPARE_FOR_SUBMISSION"
-      api(:delete, "v1/appAssetLibraryImages/#{image['id']}")
-    else
-      api(:patch, "v1/appAssetLibraryImages/#{image['id']}",
-          { data: { type: "appAssetLibraryImages", id: image["id"], attributes: { archived: true } } })
+      begin
+        api(:delete, "v1/appAssetLibraryImages/#{image['id']}")
+        deleted = true
+      rescue RuntimeError => e
+        # An image that went out with a (since cancelled) review keeps PREPARE_FOR_SUBMISSION
+        # but can no longer be deleted; archive it like any submitted image.
+        raise unless e.message.include?("ASSET_PREVIOUSLY_SUBMITTED_FOR_REVIEW")
+      end
+    end
+    unless deleted
+      begin
+        api(:patch, "v1/appAssetLibraryImages/#{image['id']}",
+            { data: { type: "appAssetLibraryImages", id: image["id"], attributes: { archived: true } } })
+      rescue RuntimeError => e
+        # Submitted but never approved (review cancelled): Apple allows neither delete nor
+        # archive. It stays unplaced in the library, which is harmless.
+        raise unless e.message.include?("Only an approved asset can be archived")
+        ui.important("Left unplaced image #{image['id']} in the library (submitted, never approved)")
+      end
     end
     ui.message("Retired the previous #{placement.dig('attributes', 'placementType')} image #{image['id']}")
   end

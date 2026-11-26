@@ -1,0 +1,420 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Tocamatrol Promo</title>
+<style>
+@font-face { font-family: "Archivo Black"; src: url("../../web/src/fonts/archivo-black-400-latin.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-weight: 400 700; src: url("../../web/src/fonts/rubik-latin.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 500 700; src: url("../../web/src/fonts/jetbrains-mono-latin.woff2") format("woff2"); }
+:root {
+  --ink: #151311; --yellow: #ffd21f; --cream: #FFF6DF; --blue: #1957d6; --cyan: #38e4ff;
+  --green: #4fe36e; --red: #d92b21; --violet: #6b2fd6; --orange: #ff8a1f; --magenta: #c2185b;
+  --display: "Archivo Black", system-ui, sans-serif; --sans: "Rubik", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #151311; overflow: hidden; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden;
+  background: var(--yellow); font-family: var(--sans); color: var(--ink); transform-origin: 0 0; }
+.abs { position: absolute; }
+#rays { position: absolute; left: -600px; top: -900px; width: 3120px; height: 3120px;
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.22) 0deg 6deg, rgba(255,255,255,0) 6deg 12deg); }
+#dots { position: absolute; inset: 0;
+  background: radial-gradient(circle, rgba(21,19,17,.10) 1.7px, transparent 2.2px) 0 0 / 26px 26px; }
+
+/* headline */
+#brand { left: 150px; top: 58px; background: var(--ink); color: var(--yellow); font: 700 22px/1 var(--mono);
+  letter-spacing: .14em; padding: 10px 16px 9px; border-radius: 10px; }
+.head { left: 150px; top: 104px; width: 1700px; }
+.head h1 { margin: 0; font: 400 86px/1.02 var(--display); letter-spacing: -.01em; }
+.head p { margin: 12px 0 0; font: 500 34px/1.2 var(--sans); }
+
+/* phone */
+#phone { left: 150px; top: 262px; width: 390px; height: 770px; background: var(--ink); border-radius: 64px;
+  padding: 14px; box-shadow: 14px 14px 0 rgba(21,19,17,.9); }
+#pscreen { position: relative; width: 100%; height: 100%; background: var(--cream); border-radius: 50px; overflow: hidden;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.status { display: flex; justify-content: space-between; font: 700 17px/1 var(--sans); padding: 6px 22px 0; }
+.toprow { display: flex; justify-content: space-between; align-items: center; }
+.pill { font: 700 12px/1 var(--mono); border: 3px solid var(--ink); border-radius: 999px; padding: 6px 9px; background: #fff;
+  display: flex; align-items: center; gap: 6px; }
+.led { width: 9px; height: 9px; border-radius: 50%; background: #1fae4b; }
+.seg { display: flex; border: 3px solid var(--ink); border-radius: 10px; overflow: hidden; background: #fff; position: relative; }
+.seg span { font: 700 12px/1 var(--sans); padding: 7px 9px; position: relative; z-index: 1; }
+#segthumb { position: absolute; top: 0; bottom: 0; left: 0; width: 50%; background: var(--yellow); }
+#grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; }
+.mb { border: 3px solid var(--ink); border-radius: 12px; box-shadow: 4px 4px 0 var(--ink); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.mb b { font: 700 17px/1 var(--sans); }
+.mb i { font: 500 11px/1 var(--mono); font-style: normal; opacity: .85; }
+.mb.light { color: var(--ink); }
+#lastsent { border: 3px solid var(--ink); border-radius: 14px; background: #fff; padding: 10px 14px; height: 78px; }
+#lastsent .tag { display: inline-block; font: 700 10px/1 var(--mono); background: var(--yellow); border: 2px solid var(--ink);
+  border-radius: 6px; padding: 3px 6px; letter-spacing: .08em; }
+#lsText { font: 700 20px/1.2 var(--sans); margin-top: 6px; display: flex; justify-content: space-between; }
+#lsState { font: 700 13px/1.8 var(--mono); color: #1a8a3d; }
+#trackpad { position: absolute; left: 16px; right: 16px; top: 104px; bottom: 14px; background: #fff;
+  border: 3px solid var(--ink); border-radius: 22px; opacity: 0; overflow: hidden; }
+#tpsurf { position: absolute; inset: 12px 12px 86px; border-radius: 14px; background:
+  radial-gradient(circle, rgba(25,87,214,.18) 1.6px, transparent 2px) 0 0 / 20px 20px, #eef4ff; border: 2px dashed #9db6ea; }
+#tpsurf span { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font: 700 13px/1 var(--mono); color: #5a6fa3; letter-spacing: .12em; }
+.tpbtns { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 62px; display: flex; gap: 10px; }
+.tpbtns div { flex: 1; border: 3px solid var(--ink); border-radius: 12px; background: var(--cream); box-shadow: 3px 3px 0 var(--ink);
+  display: flex; align-items: center; justify-content: center; font: 700 15px/1 var(--sans); }
+#finger { width: 74px; height: 74px; margin: -37px 0 0 -37px; border-radius: 50%; background: rgba(21,19,17,.22);
+  border: 4px solid rgba(255,255,255,.95); box-shadow: 0 0 0 3px rgba(21,19,17,.5); opacity: 0; z-index: 30; }
+
+/* radio */
+#svg { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: visible; }
+.chip { position: absolute; left: 0; top: 0; border: 3px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink);
+  font: 700 22px/1 var(--mono); padding: 8px 11px; white-space: nowrap; background: var(--yellow); opacity: 0; z-index: 20; }
+.chip small { font-size: 13px; opacity: .6; margin-right: 6px; }
+.chip.ptr { background: var(--cyan); font-size: 18px; padding: 7px 10px; border-radius: 999px; }
+.chip.key1 { min-width: 44px; text-align: center; padding: 8px 0; background: #fff; }
+
+/* dongle */
+#dongle { left: 735px; top: 640px; width: 370px; height: 140px; background: #2b2724; border: 4px solid var(--ink);
+  border-radius: 34px; box-shadow: 12px 12px 0 rgba(21,19,17,.9); z-index: 5; }
+#oled { position: absolute; left: 62px; top: 18px; right: 22px; bottom: 18px; background: #070807; border-radius: 12px;
+  border: 3px solid #000; padding: 13px 18px; font-family: var(--mono); color: #4fe36e; overflow: hidden; }
+#oled .l1 { font: 700 30px/1 var(--mono); text-shadow: 0 0 12px rgba(79,227,110,.55); }
+#oled .l2 { font: 500 17px/1 var(--mono); margin-top: 12px; color: #bfe9c9; white-space: nowrap; }
+#dled { position: absolute; left: 22px; top: 56px; width: 20px; height: 20px; border-radius: 50%; background: #1d6b30; border: 3px solid #000; }
+#plug { left: 1096px; top: 690px; width: 80px; height: 40px; background: linear-gradient(#f4f4f4, #c9c9c9); border: 4px solid var(--ink);
+  border-radius: 4px; z-index: 4; }
+#plug::before, #plug::after { content: ""; position: absolute; top: 9px; width: 12px; height: 14px; background: var(--ink); }
+#plug::before { left: 14px; } #plug::after { left: 36px; }
+#plugglow { left: 1070px; top: 668px; width: 120px; height: 84px; border-radius: 30px; background: rgba(255,255,255,.95);
+  filter: blur(14px); opacity: 0; z-index: 3; }
+
+/* laptop */
+#lid { left: 1170px; top: 252px; width: 640px; height: 436px; background: var(--ink); border-radius: 26px; padding: 18px;
+  box-shadow: 14px 14px 0 rgba(21,19,17,.9); }
+#lscreen { position: relative; width: 100%; height: 100%; border-radius: 10px; overflow: hidden;
+  background: radial-gradient(circle at 80% 110%, #3c7bff 0, transparent 55%), linear-gradient(160deg, #1248cf, #0c2f8f); }
+#lscreen::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255,255,255,.09) 1.4px, transparent 2px) 0 0 / 18px 18px; }
+.menubar { position: absolute; left: 0; right: 0; top: 0; height: 24px; background: rgba(5,10,30,.45); color: #fff;
+  font: 600 12px/24px var(--sans); padding: 0 12px; display: flex; justify-content: space-between; }
+.dicon { position: absolute; left: 22px; width: 76px; padding: 6px 0 4px; border-radius: 10px; text-align: center; color: #fff; font: 600 12px/1.4 var(--sans); }
+.folder { width: 50px; height: 38px; margin: 0 auto 4px; background: var(--yellow); border: 3px solid var(--ink); border-radius: 4px 8px 8px 8px; position: relative; }
+.folder::before { content: ""; position: absolute; left: -3px; top: -10px; width: 22px; height: 9px; background: var(--yellow); border: 3px solid var(--ink); border-bottom: 0; border-radius: 5px 5px 0 0; }
+.doc { width: 38px; height: 46px; margin: 0 auto 4px; background: #fff; border: 3px solid var(--ink); border-radius: 4px; }
+#launcher { left: 112px; top: 64px; width: 380px; height: 54px; background: #fff; border: 3px solid var(--ink); border-radius: 14px;
+  box-shadow: 5px 5px 0 var(--ink); font: 600 22px/48px var(--mono); padding: 0 16px; opacity: 0; z-index: 3; }
+#launcher em { font-style: normal; color: #8a8a8a; margin-right: 8px; }
+#term { left: 140px; top: 104px; width: 430px; height: 250px; background: #151311; border: 3px solid #000; border-radius: 12px;
+  box-shadow: 6px 6px 0 rgba(0,0,0,.5); opacity: 0; overflow: hidden; z-index: 2; }
+#term .bar { height: 28px; background: #2b2724; display: flex; gap: 7px; align-items: center; padding: 0 11px; }
+#term .bar i { width: 11px; height: 11px; border-radius: 50%; }
+#term .bar span { color: #b8b0a6; font: 600 12px/1 var(--sans); margin-left: 10px; }
+#tbody { padding: 12px 14px; font: 500 16px/1.55 var(--mono); color: #f7f5ee; white-space: pre; }
+#tbody .p { color: var(--green); } #tbody .o { color: #c9c1b6; }
+#devpanel { left: 150px; top: 92px; width: 310px; background: #fff; border: 3px solid var(--ink); border-radius: 14px;
+  box-shadow: 6px 6px 0 var(--ink); padding: 14px 16px; opacity: 0; z-index: 4; }
+#devpanel h3 { margin: 0 0 10px; font: 700 13px/1 var(--mono); letter-spacing: .1em; color: #5a5249; }
+.devrow { display: flex; justify-content: space-between; align-items: center; font: 600 19px/1 var(--sans); padding: 9px 0; border-top: 2px solid #eee4cf; }
+.devrow b { background: #1fae4b; color: #fff; border: 2px solid var(--ink); border-radius: 999px; font: 700 12px/1 var(--mono); padding: 5px 8px; }
+.devrow.none { color: #8a8278; } .devrow.none b { background: #eee4cf; color: var(--ink); }
+#cursor { left: 0; top: 0; width: 30px; height: 40px; z-index: 10; }
+#base { left: 1110px; top: 688px; width: 760px; height: 44px; background: linear-gradient(#d9d6d0, #a9a59e); border: 4px solid var(--ink);
+  border-radius: 6px 6px 30px 30px; box-shadow: 14px 14px 0 rgba(21,19,17,.9); z-index: 6; }
+#base::after { content: ""; position: absolute; left: 50%; top: -4px; width: 130px; height: 12px; margin-left: -65px; background: #8f8b84; border-radius: 0 0 10px 10px; border: 4px solid var(--ink); border-top: 0; }
+
+/* App Store stills: no overlays except the search headline */
+.still #brand, .still .head, .still .step, .still #bleTag, .still #usbTag { display: none; }
+#stillHead { display: none; left: 0; width: 1920px; top: 210px; text-align: center; font: 400 112px/1 var(--display);
+  letter-spacing: -.01em; text-transform: uppercase; }
+.fmt-search #stillHead { display: block; }
+
+/* step labels */
+.step { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border: 3px solid var(--ink); border-radius: 999px;
+  background: #fff; box-shadow: 4px 4px 0 var(--ink); font: 700 22px/1 var(--sans); z-index: 7; white-space: nowrap; }
+.step b { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--yellow); display: grid; place-items: center; font: 700 18px/1 var(--mono); }
+#bleTag { font: 700 16px/1 var(--mono); background: var(--ink); color: #fff; border-radius: 8px; padding: 7px 10px; letter-spacing: .06em; z-index: 8; }
+#usbTag { font: 700 16px/1 var(--mono); background: var(--ink); color: #fff; border-radius: 8px; padding: 7px 10px; letter-spacing: .06em; z-index: 8; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="rays"></div><div id="dots"></div>
+<div id="stillHead" class="abs">A macro pad for any PC</div>
+<div id="scene" style="position:absolute; inset:0; transform-origin:960px 0">
+
+  <div id="brand" class="abs">TOCAMATROL</div>
+  <div class="head abs" id="h0"><h1>Tap a macro.</h1><p>Your iPhone sends it to the dongle over Bluetooth.</p></div>
+  <div class="head abs" id="h1"><h1>Swipe to point.</h1><p>The same phone becomes a wireless trackpad.</p></div>
+  <div class="head abs" id="h2"><h1>No drivers. No installs.</h1><p>The PC just sees a USB keyboard and mouse.</p></div>
+
+  <svg id="svg" viewBox="0 0 1920 1080">
+    <path id="arc" d="M 548 470 Q 700 250 905 636" fill="none" stroke="#151311" stroke-width="5" stroke-dasharray="2 14" stroke-linecap="round"/>
+    <g id="rings" fill="none" stroke="#151311" stroke-width="5" stroke-linecap="round"></g>
+  </svg>
+
+  <!-- phone -->
+  <div id="phone" class="abs">
+    <div id="pscreen">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="toprow">
+        <div class="pill"><span class="led"></span>TOCAMATROL 566D</div>
+        <div class="seg"><div id="segthumb"></div><span>Macros</span><span>Trackpad</span></div>
+      </div>
+      <div id="grid"></div>
+      <div id="lastsent"><span class="tag">LAST SENT</span><div id="lsText"><span id="lsName">Ready</span><span id="lsState"></span></div></div>
+      <div id="trackpad"><div id="tpsurf"><span>TRACKPAD</span></div><div class="tpbtns"><div>Left</div><div>Right</div></div></div>
+    </div>
+  </div>
+
+  <div class="step abs" id="st1" style="left:566px; top:960px"><b>1</b>iPhone or iPad</div>
+  <div class="abs" id="bleTag" style="left:648px; top:286px">BLUETOOTH LE · BONDED</div>
+
+  <!-- dongle -->
+  <div id="plugglow" class="abs"></div>
+  <div id="plug" class="abs"></div>
+  <div id="dongle" class="abs"><div id="dled"></div><div id="oled"><div class="l1">Connected</div><div class="l2" id="oledl2">Tocamatrol 566D v1.0</div></div></div>
+  <div class="step abs" id="st2" style="left:770px; top:816px"><b>2</b>Tocamatrol dongle</div>
+
+  <!-- laptop -->
+  <div id="lid" class="abs">
+    <div id="lscreen">
+      <div class="menubar"><span>Desktop</span><span>Thu 9:41 AM</span></div>
+      <div class="dicon abs" id="icoProj" style="top:46px"><div class="folder"></div>Projects</div>
+      <div class="dicon abs" style="top:136px"><div class="doc"></div>Notes</div>
+      <div class="dicon abs" style="top:226px"><div class="folder"></div>Photos</div>
+      <div id="launcher" class="abs"><em>›</em><span id="lText"></span></div>
+      <div id="term" class="abs"><div class="bar"><i style="background:#ff5c57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>Terminal</span></div><div id="tbody"></div></div>
+      <div id="devpanel" class="abs"><h3>CONNECTED DEVICES</h3>
+        <div class="devrow" id="dv1"><span>USB Keyboard</span><b>READY</b></div>
+        <div class="devrow" id="dv2"><span>USB Mouse</span><b>READY</b></div>
+        <div class="devrow none" id="dv3"><span>Drivers needed</span><b>NONE</b></div>
+      </div>
+      <svg id="cursor" class="abs" viewBox="0 0 30 40"><path d="M3 2 L3 32 L10 25 L15 37 L21 34 L16 23 L26 23 Z" fill="#fff" stroke="#151311" stroke-width="3" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+  <div id="base" class="abs"></div>
+  <div class="abs" id="usbTag" style="left:1112px; top:612px">USB HID</div>
+  <div class="step abs" id="st3" style="left:1330px; top:770px"><b>3</b>Any PC, Mac or Linux box</div>
+
+  <div id="finger" class="abs"></div>
+  <div id="chips"></div>
+</div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const T = 14;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const easeOut = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const backOut = (x) => { x = clamp(x); const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const ramp = (t, a, b) => clamp((t - a) / (b - a));
+const win = (t, a, b, f = .3) => Math.min(ramp(t, a - f, a), 1 - ramp(t, b - f, b));
+const lerp = (a, b, k) => a + (b - a) * k;
+const qb = (p0, p1, p2, k) => [ (1-k)*(1-k)*p0[0] + 2*(1-k)*k*p1[0] + k*k*p2[0], (1-k)*(1-k)*p0[1] + 2*(1-k)*k*p1[1] + k*k*p2[1] ];
+
+// macro grid
+const BTN = [
+  ["Copy","Ctrl+C","#1957d6"],["Paste","Ctrl+V","#1957d6"],["Find","Ctrl+F","#22c3e0",1],
+  ["Save","Ctrl+S","#2fbf55"],["New Tab","Ctrl+T","#6b2fd6"],["Zoom In","Ctrl+=","#ff8a1f"],
+  ["Terminal","Macro","#ffd21f",1],["Mute Mic","Ctrl+M","#c2185b"],["Desktop","Win+D","#fbf3e2",1],
+  ["Search","Win+Space","#22c3e0",1],["Task View","Win+Tab","#fbf3e2",1],["Screenshot","Win+S","#6b2fd6"],
+  ["Refresh","F5","#22c3e0",1],["Print","Ctrl+P","#ffd21f",1],["Lock","Win+L","#d92b21"],
+];
+const grid = $("grid");
+BTN.forEach(([n, k, c, light], i) => {
+  const d = document.createElement("div");
+  d.className = "mb" + (light ? " light" : ""); d.style.background = c; d.id = "mb" + i;
+  d.innerHTML = `<b>${n}</b><i>${k}</i>`; grid.appendChild(d);
+});
+
+// packet timeline
+const TRAVEL = .7;
+const ev = [];
+ev.push({ t: 1.25, label: "<small>0x11</small>Win+R", kind: "key", g: 1, k: "open" });
+"terminal".split("").forEach((c, i) => ev.push({ t: 1.5 + .11 * i, label: c, kind: "key1", g: 1, ch: c }));
+ev.push({ t: 2.4, label: "<small>0x11</small>Enter", kind: "key", g: 1, k: "enter" });
+"git status".split("").forEach((c, i) => ev.push({ t: 3.45 + .11 * i, label: c === " " ? "␣" : c, kind: "key1", g: 2, ch: c }));
+ev.push({ t: 4.57, label: "<small>0x11</small>Enter", kind: "key", g: 2, k: "enter" });
+
+// trackpad gesture: normalized path, start bottom-right → top-left
+const P0 = [.86, .82], P1 = [.78, .08], P2 = [.14, .14];
+const MOVE_A = 6.8, MOVE_B = 9.0;
+for (let tt = MOVE_A; tt < MOVE_B - .01; tt += .15) {
+  const k0 = ease(ramp(tt, MOVE_A, MOVE_B)), k1 = ease(ramp(tt + .15, MOVE_A, MOVE_B));
+  const a = qb(P0, P1, P2, k0), b = qb(P0, P1, P2, k1);
+  const dx = Math.round((b[0] - a[0]) * 220), dy = Math.round((b[1] - a[1]) * 160);
+  const s = (v) => (v >= 0 ? "+" : "−") + Math.abs(v);
+  if (Math.abs(dx) + Math.abs(dy) >= 3) ev.push({ t: tt, label: `${s(dx)} ${s(dy)}`, kind: "ptr", g: 3 });
+}
+ev.push({ t: 9.3, label: "<small>0x01</small>Click", kind: "ptr", g: 3, k: "click" });
+ev.forEach((e) => { e.a = e.t + TRAVEL; e.oled = e.kind === "ptr" ? (e.k === "click" ? "MOUSE  left click" : "MOUSE  " + e.label) : "KEY  " + (e.ch !== undefined ? (e.ch === " " ? "Space" : e.ch) : e.label.replace(/<small>.*<\/small>/, "")); });
+
+const chipsEl = $("chips");
+ev.forEach((e) => { const d = document.createElement("div"); d.className = "chip " + e.kind; d.innerHTML = e.label; chipsEl.appendChild(d); e.el = d; });
+
+// geometry (stage coords, measured at scale 1)
+const ARC = [[548, 470], [700, 250], [905, 636]];
+// arc-length lookup so packets travel at constant speed
+const LUT = (() => { const n = 200, pts = []; let L = 0, prev = qb(ARC[0], ARC[1], ARC[2], 0); pts.push([0, 0]);
+  for (let i = 1; i <= n; i++) { const p = qb(ARC[0], ARC[1], ARC[2], i / n); L += Math.hypot(p[0] - prev[0], p[1] - prev[1]); pts.push([L, i / n]); prev = p; }
+  return pts.map(([l, u]) => [l / L, u]); })();
+const arcU = (s) => { for (let i = 1; i < LUT.length; i++) if (LUT[i][0] >= s) { const [l0, u0] = LUT[i - 1], [l1, u1] = LUT[i]; return u0 + (u1 - u0) * (s - l0) / (l1 - l0); } return 1; };
+let G = {};
+function measure() {
+  const st = $("stage").getBoundingClientRect();
+  const r = (el) => { const b = el.getBoundingClientRect(); return { x: b.left - st.left, y: b.top - st.top, w: b.width, h: b.height }; };
+  G.btn = r($("mb6")); G.tp = r($("tpsurf")); G.scr = r($("lscreen")); G.proj = r($("icoProj"));
+  ev.forEach((e) => { const b = e.el.getBoundingClientRect(); e.w = b.width; e.h = b.height; });
+  G.curA = [520, 330]; G.curB = [G.proj.x - G.scr.x + 46, G.proj.y - G.scr.y + 30];
+}
+const tpPos = (k) => { const p = qb(P0, P1, P2, k); return [G.tp.x + p[0] * G.tp.w, G.tp.y + p[1] * G.tp.h]; };
+const curPath = (k) => { const p = qb(P0, P1, P2, k); const a = qb(P0, P1, P2, 0), b = qb(P0, P1, P2, 1);
+  const u = (p[0] - a[0]) / (b[0] - a[0]), v = (p[1] - a[1]) / (b[1] - a[1]);
+  return [lerp(G.curA[0], G.curB[0], u), lerp(G.curA[1], G.curB[1], v)]; };
+
+const ringsG = $("rings"); const rings = [];
+for (let i = 0; i < 3; i++) { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); ringsG.appendChild(p); rings.push(p); }
+
+function render(t) {
+  t = ((t % T) + T) % T;
+  // background loops: rays rotate one period (12deg) per loop, dashes advance whole periods
+  $("rays").style.transform = `rotate(${(t / T) * 12}deg)`;
+  $("arc").style.strokeDashoffset = -(t / T) * 16 * 30;
+
+  // headlines
+  const hv = [Math.max(win(t, 0, 6.2), ramp(t, 13.6, 14)), win(t, 6.5, 10.6), win(t, 10.9, 13.6)];
+  hv.forEach((v, i) => { const h = $("h" + i); h.style.opacity = v; h.style.transform = `translateY(${(1 - v) * 22}px)`; });
+
+  // phone: macro press
+  const press = win(t, 1.02, 1.3, .08);
+  const mb = $("mb6");
+  mb.style.transform = `translate(${press * 4}px, ${press * 4}px)`;
+  mb.style.boxShadow = `${4 - press * 4}px ${4 - press * 4}px 0 #151311`;
+  const sending = t >= 1.2 && t < 5.3, sent = t >= 5.3 && t < 6.6;
+  $("lsName").textContent = t >= 1.2 && t < 13.4 ? "Open Terminal" : "Ready";
+  $("lsState").textContent = sending ? "SENDING…" : sent || (t >= 5.3 && t < 13.4) ? "SENT ✓" : "";
+
+  // phone: trackpad mode
+  const tpv = Math.min(ramp(t, 6.2, 6.5), 1 - ramp(t, 13.2, 13.5));
+  $("trackpad").style.opacity = tpv; $("grid").style.opacity = 1 - tpv;
+  $("trackpad").style.transform = `translateY(${(1 - tpv) * 30}px)`;
+  $("segthumb").style.transform = `translateX(${ease(tpv) * 100}%)`;
+  $("segthumb").style.width = `${lerp(54, 46, ease(tpv))}%`;
+
+  // finger
+  const f = $("finger"); let fo = 0, fx = 0, fy = 0, fs = 1;
+  const bc = [G.btn.x + G.btn.w / 2 + 6, G.btn.y + G.btn.h / 2 + 6];
+  if (t < 2) {
+    const k = easeOut(ramp(t, .45, 1.0));
+    fx = lerp(bc[0] + 90, bc[0], k); fy = lerp(bc[1] + 160, bc[1], k);
+    fo = Math.min(ramp(t, .45, .7), 1 - ramp(t, 1.35, 1.6)); fs = 1 - press * .12;
+  } else if (t > 6.4 && t < 10) {
+    const k = ease(ramp(t, MOVE_A, MOVE_B)); [fx, fy] = tpPos(k);
+    const tap = win(t, 9.2, 9.38, .06);
+    fo = Math.min(ramp(t, 6.45, 6.75), 1 - ramp(t, 9.5, 9.8)) * (1 - tap * .25); fs = 1 - tap * .15;
+  }
+  f.style.opacity = fo; f.style.transform = `translate(${fx}px, ${fy}px) scale(${fs})`;
+
+  // chips + radio activity
+  let inflight = 0, lastArr = null, recentArr = -9;
+  ev.forEach((e) => {
+    const k = (t - e.t) / TRAVEL;
+    if (k > 0 && k < 1) {
+      inflight++;
+      const kk = arcU(k);
+      const [x, y] = qb(ARC[0], ARC[1], ARC[2], kk);
+      // stills skip packets still fading in at the phone edge
+      const o = STILL && k < .12 ? 0 : Math.min(ramp(k, 0, .12), 1 - ramp(k, .85, 1));
+      const sc = .6 + .4 * Math.min(ramp(k, 0, .15), 1 - ramp(k, .8, 1));
+      e.el.style.opacity = o; e.el.style.transform = `translate(${x - e.w / 2}px, ${y - e.h / 2}px) scale(${sc})`;
+    } else e.el.style.opacity = 0;
+    if (t >= e.a) { lastArr = e; recentArr = e.a; }
+  });
+  const act = clamp(inflight);
+  rings.forEach((p, i) => {
+    const ph = ((t * 1.6 + i / 3) % 1); const R = 22 + ph * 70;
+    const a0 = -1.05, a1 = .35, cx = 548, cy = 470;
+    p.setAttribute("d", `M ${cx + R * Math.cos(a0)} ${cy + R * Math.sin(a0)} A ${R} ${R} 0 0 1 ${cx + R * Math.cos(a1)} ${cy + R * Math.sin(a1)}`);
+    p.style.opacity = act * (1 - ph) * .9;
+  });
+
+  // dongle
+  const since = t - recentArr;
+  const blink = since >= 0 && since < .09 ? 1 : 0;
+  $("dled").style.background = blink ? "#7dff9a" : "#1d6b30";
+  $("dled").style.boxShadow = blink ? "0 0 18px 6px rgba(125,255,154,.8)" : "none";
+  const showPkt = lastArr && since < 1.4 && t < 13.4;
+  $("oledl2").textContent = showPkt ? lastArr.oled : "Tocamatrol 566D v1.0";
+  $("plugglow").style.opacity = since >= 0 && since < .25 ? (1 - since / .25) * .9 : 0;
+
+  // step label highlights
+  const s1 = fo > .4, s2 = inflight > 0, s3 = since >= 0 && since < .35;
+  [[1, s1], [2, s2], [3, s3]].forEach(([n, on]) => {
+    const el = $("st" + n); el.style.background = on ? "#151311" : "#fff"; el.style.color = on ? "#ffd21f" : "#151311";
+    el.firstChild.style.background = on ? "#ffd21f" : "#151311"; el.firstChild.style.color = on ? "#151311" : "#ffd21f";
+  });
+
+  // PC: launcher
+  const open = ev.find((e) => e.k === "open"), enter1 = ev.find((e) => e.k === "enter" && e.g === 1), enter2 = ev.find((e) => e.k === "enter" && e.g === 2);
+  const lv = Math.min(ramp(t, open.a, open.a + .15), 1 - ramp(t, enter1.a, enter1.a + .15));
+  $("launcher").style.opacity = lv; $("launcher").style.transform = `scale(${.9 + .1 * backOut(ramp(t, open.a, open.a + .3))})`;
+  $("lText").textContent = ev.filter((e) => e.g === 1 && e.ch !== undefined && t >= e.a).map((e) => e.ch).join("") + (Math.floor(t * 3) % 2 && lv > .5 ? "" : "▌");
+
+  // PC: terminal
+  const topen = enter1.a + .15;
+  const tv = Math.min(ramp(t, topen, topen + .25), 1 - ramp(t, 10.6, 10.9));
+  $("term").style.opacity = tv; $("term").style.transform = `scale(${.85 + .15 * backOut(ramp(t, topen, topen + .35))})`;
+  const typed = ev.filter((e) => e.g === 2 && e.ch !== undefined && t >= e.a).map((e) => e.ch).join("");
+  const ob = enter2.a + .12, caret = Math.floor(t * 2.5) % 2 ? " " : "▌";
+  let html = `<span class="p">~ $</span> ${typed}${t < enter2.a ? caret : ""}`;
+  const out = ["On branch main", "Your branch is up to date.", "nothing to commit, working tree clean"];
+  out.forEach((l, i) => { if (t >= ob + i * .12) html += `\n<span class="o">${l}</span>`; });
+  if (t >= ob + .4) html += `\n<span class="p">~ $</span> ${caret}`;
+  $("tbody").innerHTML = html;
+
+  // PC: cursor
+  const ck = ease(ramp(t, MOVE_A + TRAVEL, MOVE_B + TRAVEL));
+  let [cx, cy] = curPath(ck);
+  const back = ease(ramp(t, 13.0, 13.7));
+  if (back > 0) { cx = lerp(G.curB[0], G.curA[0], back); cy = lerp(G.curB[1], G.curA[1], back); }
+  $("cursor").style.transform = `translate(${cx - 3}px, ${cy - 2}px)`;
+  const click = ev.find((e) => e.k === "click");
+  const sel = Math.min(ramp(t, click.a, click.a + .1), 1 - ramp(t, 12.9, 13.2));
+  $("icoProj").style.background = `rgba(255,255,255,${sel * .28})`;
+  $("icoProj").style.boxShadow = `0 0 0 ${sel * 3}px rgba(255,210,31,${sel})`;
+
+  // PC: devices panel
+  const dv = Math.min(ramp(t, 11.0, 11.25), 1 - ramp(t, 13.1, 13.35));
+  $("devpanel").style.opacity = dv; $("devpanel").style.transform = `translateY(${(1 - backOut(ramp(t, 11.0, 11.4))) * 30}px)`;
+  [1, 2, 3].forEach((i) => { const v = ramp(t, 11.3 + i * .25, 11.5 + i * .25); $("dv" + i).style.opacity = v; $("dv" + i).style.transform = `translateX(${(1 - v) * 16}px)`; });
+}
+
+window.render = render;
+// ?format=video (1920x1080, default) | header (21:9 product page header, no text)
+// | search (3:2 search results art, one headline); ?t= picks the moment for stills.
+const Q = new URLSearchParams(location.search);
+const FORMAT = Q.get("format") || "video";
+const STILL = FORMAT !== "video";
+const LAYOUT = {
+  video: { h: 1080, scene: "translateY(56px) scale(.88)" },
+  header: { h: 823, scene: "translate(-50px, -170px) scale(.88)" },
+  search: { h: 1280, scene: "translate(-46px, 230px) scale(.78)" },
+}[FORMAT];
+window.ready = document.fonts.ready.then(() => {
+  measure();
+  $("stage").style.height = LAYOUT.h + "px";
+  $("scene").style.transform = LAYOUT.scene;
+  if (FORMAT !== "video") document.body.classList.add("still", "fmt-" + FORMAT);
+  render(Number(Q.get("t") || 0));
+  return true;
+});
+if (!Q.has("capture") && FORMAT === "video") {
+  window.ready.then(() => {
+    const fit = () => { const s = Math.min(innerWidth / 1920, innerHeight / 1080); $("stage").style.transform = `scale(${s})`; };
+    fit(); addEventListener("resize", fit);
+    const t0 = performance.now(); const loop = (n) => { render((n - t0) / 1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>

@@ -68,6 +68,10 @@ const DEMO_KEYS: DemoKey[] = [
   },
 ];
 
+const MEDIA = `${import.meta.env.BASE_URL}media/`;
+const prefersReducedMotion =
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+
 export function App() {
   const [selectedBoardId, setSelectedBoardId] = useState(BOARDS[0].id);
   const [activeKeyId, setActiveKeyId] = useState<string>(DEMO_KEYS[0].id);
@@ -209,7 +213,24 @@ export function App() {
             </div>
           </div>
 
-          <div data-impeccable-ignore="hard-offset-shadow" className="comic-panel mt-10 p-5 sm:p-6">
+          <figure data-impeccable-ignore="hard-offset-shadow" className="comic-panel mt-10 overflow-hidden">
+            <video
+              className="block aspect-video w-full bg-yellow"
+              poster={`${MEDIA}tocamatrol-how-it-works-poster.jpg`}
+              autoPlay={!prefersReducedMotion}
+              controls={prefersReducedMotion}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label="How Tocamatrol works: a macro tap on the phone travels over Bluetooth to the dongle, which types it on the PC as a USB keyboard; then the phone works as a trackpad."
+            >
+              <source src={`${MEDIA}tocamatrol-how-it-works.webm`} type="video/webm" />
+              <source src={`${MEDIA}tocamatrol-how-it-works.mp4`} type="video/mp4" />
+            </video>
+          </figure>
+
+          <div data-impeccable-ignore="hard-offset-shadow" className="comic-panel mt-4 p-5 sm:p-6">
             <ol className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <li className="flex items-start gap-3.5">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-pop-ink bg-[#d92b21] text-white shadow-[2px_2px_0_0_var(--color-ink-shadow)]">
