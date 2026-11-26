@@ -2,6 +2,11 @@
   "name": "tocamatrol-promo-video",
   "private": true,
   "type": "module",
-  "scripts": { "render": "node render.mjs" },
-  "devDependencies": { "playwright-core": "1.49.1" }
+  "scripts": {
+    "render": "node render.mjs web",
+    "render:store": "node render.mjs store"
+  },
+  "devDependencies": {
+    "playwright-core": "1.49.1"
+  }
 }

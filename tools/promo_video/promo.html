@@ -392,9 +392,10 @@ function render(t) {
 window.render = render;
 // ?format=video (1920x1080, default) | header (21:9 product page header, no text)
 // | search (3:2 search results art, one headline); ?t= picks the moment for stills.
+// Add ?motion to render header or search as an App Store video instead of a still.
 const Q = new URLSearchParams(location.search);
 const FORMAT = Q.get("format") || "video";
-const STILL = FORMAT !== "video";
+const STILL = FORMAT !== "video" && !Q.has("motion");
 const LAYOUT = {
   video: { h: 1080, scene: "translateY(56px) scale(.88)" },
   header: { h: 823, scene: "translate(-50px, -170px) scale(.88)" },

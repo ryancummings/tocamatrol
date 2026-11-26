@@ -13,7 +13,7 @@ machine as a standard USB HID mouse and keyboard with zero drivers or companion 
 | `dongle/` | ESP32-S3 firmware: PlatformIO, Arduino framework, NimBLE-Arduino, TinyUSB HID. |
 | `ios/` | SwiftUI app (iOS 17+), `TocaCore` Swift package, and `fastlane/` release & poster automation. `project.yml` is the XcodeGen spec; `.xcodeproj` is generated, not committed. |
 | `web/` | Static Vite + React + TypeScript + Tailwind web flasher (`esptool-js`), hardware guide, pairing instructions, and privacy policy. |
-| `tools/` | `make_app_icon.py` (native Liquid Glass `AppIcon.icon` generator), Python test sender (`bleak`), Linux HID watcher (`watch_hid.py`), and `promo_video/` (how-it-works scene: `npm run render` writes the video to `web/public/media/`; `ios/fastlane/creative_assets.py` renders the App Store header and search art from it). |
+| `tools/` | `make_app_icon.py` (native Liquid Glass `AppIcon.icon` generator), Python test sender (`bleak`), Linux HID watcher (`watch_hid.py`), and `promo_video/` (how-it-works scene: `npm run render` writes the video to `web/public/media/`; `npm run render:store` writes the App Store header and search videos to `ios/fastlane/creative/`; `ios/fastlane/creative_assets.py` renders the matching stills). |
 | `GLOSSARY.md`, `docs/adr/` | Domain glossary and architecture decision records. |
 
 ## Rules
