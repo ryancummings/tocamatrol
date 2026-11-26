@@ -16,6 +16,11 @@ screenshot_sync_helper = File.join(skill, "scripts", "fastlane", "screenshot_syn
 require release_helpers if File.exist?("#{release_helpers}.rb")
 require screenshot_sync_helper if File.exist?("#{screenshot_sync_helper}.rb")
 
+# Fallback if release_helpers wasn't loaded: ensure Apple /usr/bin/rsync precedes Homebrew rsync.
+unless defined?(OneRadStoreRelease) && OneRadStoreRelease.respond_to?(:ensure_apple_rsync_path!)
+  ENV["PATH"] = (["/usr/bin"] + ENV["PATH"].to_s.split(File::PATH_SEPARATOR).reject { |p| p == "/usr/bin" }).join(File::PATH_SEPARATOR)
+end
+
 APP_BUNDLE_ID = "com.OneRadStudio.tocamatrol"
 FASTLANE_DIR = [Dir.pwd, File.join(Dir.pwd, "fastlane"), File.expand_path(__dir__)]
                .map { |d| File.expand_path(d) }
@@ -138,8 +143,14 @@ platform :ios do
         # Shut down only the simulator this run booted.
         (booted_simulators - before).each { |udid| sh("xcrun", "simctl", "shutdown", udid) rescue nil }
       end
+      rotate_landscape_ipad_captures(device) if device.include?("iPad")
     end
     UI.success("Screenshots in #{RAW_SHOTS_DIR}")
+  end
+
+  desc "Render Ink & Pop comic App Store posters from fastlane/screenshots/en-US into fastlane/deliver_screenshots/en-US."
+  lane :frame_screenshots do
+    sh("python3", File.join(FASTLANE_DIR, "frame_posters.py"))
   end
 
   desc "Reconcile App Store Connect screenshots with fastlane/deliver_screenshots (idempotent)."
@@ -197,6 +208,13 @@ platform :ios do
     require_asc_release!.upload_metadata!
   end
 
+  desc "READ-ONLY: report App Store Connect version status and local-vs-remote metadata parity."
+  lane :metadata_status do
+    asc = require_asc_release!
+    asc.status
+    asc.download_metadata(write: false)
+  end
+
   desc "List the latest builds on App Store Connect (read-only)"
   lane :builds do
     require_asc_release!.recent_builds.each do |b|
@@ -233,4 +251,14 @@ end
 
 def git_head
   sh("git", "-C", REPO_DIR, "rev-parse", "HEAD", log: false).strip
+end
+
+# Landscape-only iPad captures from fastlane snapshot arrive rotated 90 degrees clockwise (2064x2752).
+def rotate_landscape_ipad_captures(device)
+  Dir.glob(File.join(RAW_SHOTS_DIR, "#{device}-*.png")).sort.each do |path|
+    width, height = `magick identify -format "%w %h" #{path.shellescape}`.strip.split.map(&:to_i)
+    next unless height > width
+
+    sh("magick", path, "-rotate", "-90", path)
+  end
 end

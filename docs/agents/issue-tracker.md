@@ -6,8 +6,4 @@ messages.
 
 ## Local Plane conventions (maintainers only)
 
-If `plane` CLI and `~/.config/plane/env` are configured locally:
-
-- Read: `plane get KEY`, `plane list TOCA --open`
-- Write: `plane create TOCA "..."`, `plane comment KEY --body ...`, `plane update KEY --state ...`
-- Close work items with verification evidence once verified.
+If `plane` CLI and `~/.config/plane/env` are configured locally, use the global `project` skill (`plane get`, `plane list TOCA --open`, `plane create`, `plane comment`, `plane update`) and close work items with verification evidence once verified.

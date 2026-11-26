@@ -11,9 +11,9 @@ machine as a standard USB HID mouse and keyboard with zero drivers or companion 
 | `protocol/PROTOCOL.md` | The BLE packet spec. Single source of truth: change it first, then `dongle/lib/toca_core/`, `ios/TocaCore/`, and `tools/send_test.py`. |
 | `boards.json` | Declarative hardware catalog shared by firmware CI, the web flasher, and hardware docs. |
 | `dongle/` | ESP32-S3 firmware: PlatformIO, Arduino framework, NimBLE-Arduino, TinyUSB HID. |
-| `ios/` | SwiftUI app (iOS 17+) and `TocaCore` Swift package. `project.yml` is the XcodeGen spec; `.xcodeproj` is generated, not committed. |
+| `ios/` | SwiftUI app (iOS 17+), `TocaCore` Swift package, and `fastlane/` release & poster automation. `project.yml` is the XcodeGen spec; `.xcodeproj` is generated, not committed. |
 | `web/` | Static Vite + React + TypeScript + Tailwind web flasher (`esptool-js`), hardware guide, pairing instructions, and privacy policy. |
-| `tools/` | Python test sender (`bleak`) and Linux HID watcher (`watch_hid.py`). |
+| `tools/` | `make_app_icon.py` (native Liquid Glass `AppIcon.icon` generator), Python test sender (`bleak`), and Linux HID watcher (`watch_hid.py`). |
 | `GLOSSARY.md`, `docs/adr/` | Domain glossary and architecture decision records. |
 
 ## Rules

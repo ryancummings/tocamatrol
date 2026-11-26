@@ -52,6 +52,36 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - name: Run Python packet encoder self-test
         run: uv run tools/send_test.py --selftest
+      - name: Check Python scripts, AppIcon.icon integrity, and Fastfile syntax
+        run: |
+          python3 -m py_compile tools/make_app_icon.py ios/fastlane/frame_posters.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          icon = Path("ios/Tocamatrol/AppIcon.icon")
+          spec = json.loads((icon / "icon.json").read_text())
+          assets = icon / "Assets"
+          for group in spec["groups"]:
+              for layer in group["layers"]:
+                  img = layer["image-name"]
+                  assert (assets / img).is_file(), f"Missing icon asset: {img}"
+          print("Verified AppIcon.icon assets")
+          PY
+          ruby -c ios/fastlane/Fastfile
+
+  ios-app:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project and build iOS app
+        working-directory: ios
+        run: |
+          xcodegen generate --quiet
+          xcodebuild -project Tocamatrol.xcodeproj -scheme Tocamatrol \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build | tail -n 20
 
   web:
     runs-on: ubuntu-latest

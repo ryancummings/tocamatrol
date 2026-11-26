@@ -279,6 +279,7 @@ private struct ReadoutPanel: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .comicPanel(fill: Theme.surface, cornerRadius: 12, borderWidth: 2, shadowOffset: 3)
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("readoutPanel")
     }
 
     private var notSentMessage: String {

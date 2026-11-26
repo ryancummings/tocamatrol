@@ -202,6 +202,79 @@ final class ScreenshotCatalogUITests: XCTestCase {
         capture("10_Trackpad")
     }
 
+    // MARK: - Layout & privacy regressions
+
+    @MainActor
+    func testPadLayoutInvariants() {
+        let app = launch(page: Self.quickPage)
+        let quickTab = app.buttons["Quick Actions"].firstMatch
+        XCTAssertTrue(quickTab.waitForExistence(timeout: 5))
+        XCTAssertGreaterThanOrEqual(quickTab.frame.minX, 0, "First page tab should not clip off the left edge")
+        XCTAssertTrue(quickTab.isHittable)
+
+        let addPage = app.buttons["addPageButton"].firstMatch
+        XCTAssertTrue(addPage.waitForExistence(timeout: 5))
+        XCTAssertTrue(addPage.isHittable)
+        XCTAssertGreaterThanOrEqual(addPage.frame.minX, quickTab.frame.maxX - 1)
+
+        let readout = app.descendants(matching: .any).matching(identifier: "readoutPanel").firstMatch
+        XCTAssertTrue(readout.waitForExistence(timeout: 5))
+        let screenshot = app.buttons["Screenshot"].firstMatch
+        let comment = app.buttons["Toggle Comment"].firstMatch
+        XCTAssertTrue(screenshot.waitForExistence(timeout: 5))
+        XCTAssertTrue(comment.exists)
+        XCTAssertLessThanOrEqual(screenshot.frame.maxY, readout.frame.minY + 0.5)
+        XCTAssertLessThanOrEqual(comment.frame.maxY, readout.frame.minY + 0.5)
+    }
+
+    @MainActor
+    func testSensitiveMacroMasksReadout() {
+        let app = launch(page: Self.quickPage)
+        openPagesAndMacros(app)
+        app.staticTexts["Open Terminal"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Open Terminal"].waitForExistence(timeout: 5))
+
+        let toggle = app.switches["sensitiveMacroToggle"].firstMatch
+        for _ in 0..<6 where !toggle.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
+        if (toggle.value as? String) != "1" {
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        }
+        XCTAssertEqual(toggle.value as? String, "1")
+        app.buttons["Save"].tap()
+
+        let navBar = app.navigationBars["Pages & Macros"]
+        let done = navBar.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        done.tap()
+
+        let copyButton = app.buttons["Copy"].firstMatch
+        let sheetGone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: navBar)
+        let padReady = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true && hittable == true"), object: copyButton)
+        XCTAssertEqual(XCTWaiter.wait(for: [sheetGone, padReady], timeout: 5), .completed)
+
+        let workspace = app.buttons["Workspace"].firstMatch
+        XCTAssertTrue(workspace.waitForExistence(timeout: 5))
+        workspace.tap()
+
+        let terminal = app.buttons["Open Terminal"].firstMatch
+        XCTAssertTrue(terminal.waitForExistence(timeout: 5))
+        terminal.tap()
+
+        let readout = app.descendants(matching: .any).matching(identifier: "readoutPanel").firstMatch
+        XCTAssertTrue(readout.waitForExistence(timeout: 5))
+        let deadline = Date().addingTimeInterval(3)
+        while Date() < deadline && !readout.label.contains("*********") {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        XCTAssertTrue(readout.label.contains("*********"), "Expected masked output in readout, got: \(readout.label)")
+        XCTAssertFalse(readout.label.contains("Typed text"))
+        XCTAssertFalse(readout.label.contains("terminal"))
+        XCTAssertFalse(readout.label.contains("git status"))
+    }
+
     // MARK: - Helpers
 
     @MainActor @discardableResult
@@ -211,7 +284,7 @@ final class ScreenshotCatalogUITests: XCTestCase {
         app.launchArguments += ["-UITestMode", "-UITestResetState"]
         let defaults = ["macroPage": page, "inputMode": "keys"].merging(settings) { $1 }
         for (key, value) in defaults.sorted(by: { $0.key < $1.key }) {
-            app.launchArguments += ["-\(key)", value]
+            app.launchArguments += ["-UITestDefault:\(key)", value]
         }
         app.launch()
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 10))

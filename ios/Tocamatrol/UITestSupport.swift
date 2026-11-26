@@ -11,9 +11,18 @@ enum UITestSupport {
     /// Runs before any view reads its settings.
     static func prepare() {
         guard isActive else { return }
-        if ProcessInfo.processInfo.arguments.contains("-UITestResetState"),
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-UITestResetState"),
            let domain = Bundle.main.bundleIdentifier {
             UserDefaults.standard.removePersistentDomain(forName: domain)
+        }
+        // Seed initial @AppStorage defaults into the standard domain rather than passing
+        // `-<key>` on the command line, which would lock NSArgumentDomain against UI changes.
+        for index in args.indices {
+            let arg = args[index]
+            guard arg.hasPrefix("-UITestDefault:"), args.indices.contains(index + 1) else { continue }
+            let key = String(arg.dropFirst("-UITestDefault:".count))
+            UserDefaults.standard.set(args[index + 1], forKey: key)
         }
     }
 
@@ -21,7 +30,7 @@ enum UITestSupport {
     static let otherDongle = UUID(uuidString: "6D1A0C5E-0000-4000-8000-000000001F2B")!
     static let newDongle = UUID(uuidString: "6D1A0C5E-0000-4000-8000-00000000A93C")!
 
-    /// Fixed IDs, so tests can open a page with `-macroPage <id>`.
+    /// Fixed IDs, so tests can open a page with `-UITestDefault:macroPage <id>`.
     static let quickPage = UUID(uuidString: "0CA7E000-0000-4000-8000-000000000001")!
     static let devPage = UUID(uuidString: "0CA7E000-0000-4000-8000-000000000002")!
 
