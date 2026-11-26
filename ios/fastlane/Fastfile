@@ -87,6 +87,27 @@ SHOT_DEVICES = {
   "Tocamatrol-Shots-iPadPro13" => "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB"
 }.freeze
 
+# App-level settings applied by the store_settings lane. Tocamatrol has no web view, chat,
+# user content, ads, location sharing or purchases, so every age-rating answer is "none".
+AGE_RATING_BOOLEANS = %w[
+  advertising ageAssurance datingAndRelationships gambling healthOrWellnessTopics lootBox messagingAndChat
+  parentalControls sharedLocation socialMedia unrestrictedWebAccess userGeneratedContent
+].freeze
+AGE_RATING_FREQUENCIES = %w[
+  alcoholTobaccoOrDrugUseOrReferences contests gamblingSimulated gunsOrOtherWeapons
+  horrorOrFearThemes matureOrSuggestiveThemes medicalOrTreatmentInformation profanityOrCrudeHumor
+  sexualContentGraphicAndNudity sexualContentOrNudity violenceCartoonOrFantasy
+  violenceRealistic violenceRealisticProlongedGraphicOrSadistic
+].freeze
+STORE_SETTINGS = {
+  copyright: "2026 One Rad Studio LLC",
+  content_rights: "DOES_NOT_USE_THIRD_PARTY_CONTENT",
+  primary_category: "PRODUCTIVITY",
+  secondary_category: "UTILITIES",
+  age_rating: AGE_RATING_BOOLEANS.to_h { |k| [k, false] }
+                .merge(AGE_RATING_FREQUENCIES.to_h { |k| [k, "NONE"] })
+}.freeze
+
 default_platform(:ios)
 
 platform :ios do
@@ -271,6 +292,43 @@ platform :ios do
     drift = attributes.keys.reject { |k| remote.send(k) == attributes[k] }
     UI.user_error!("App Review information differs on App Store Connect: #{drift.join(', ')}") unless drift.empty?
     UI.success("App Review information verified on #{version.version_string} (#{attributes[:notes].length} characters of notes).")
+  end
+
+  desc "Set the app-level App Store settings that deliver does not cover: copyright, categories, " \
+       "content rights and the age rating questionnaire (no objectionable content: 4+). Idempotent."
+  lane :store_settings do
+    asc = require_asc_release!
+    app = asc.app
+    version = asc.editable_version(required: true)
+    info = app.fetch_edit_app_info || UI.user_error!("No editable app info")
+    api = Spaceship::ConnectAPI.tunes_request_client
+
+    version.update(attributes: { copyright: STORE_SETTINGS[:copyright] }) unless version.copyright == STORE_SETTINGS[:copyright]
+    unless app.content_rights_declaration == STORE_SETTINGS[:content_rights]
+      app.update(attributes: { contentRightsDeclaration: STORE_SETTINGS[:content_rights] })
+    end
+    info.update_categories(category_id_map: { primary_category_id: STORE_SETTINGS[:primary_category],
+                                              secondary_category_id: STORE_SETTINGS[:secondary_category] })
+    declaration = api.get("v1/appInfos/#{info.id}/ageRatingDeclaration").body["data"]
+    wanted = STORE_SETTINGS[:age_rating]
+    unless wanted.all? { |k, v| declaration["attributes"][k] == v }
+      api.patch("v1/ageRatingDeclarations/#{declaration['id']}",
+                { data: { type: "ageRatingDeclarations", id: declaration["id"], attributes: wanted } })
+    end
+
+    # Fresh queries, not the write responses.
+    app = asc.app
+    version = asc.editable_version(required: true)
+    info = app.fetch_edit_app_info
+    remote_age = api.get("v1/appInfos/#{info.id}/ageRatingDeclaration").body["data"]["attributes"]
+    problems = []
+    problems << "copyright #{version.copyright.inspect}" unless version.copyright == STORE_SETTINGS[:copyright]
+    problems << "content rights #{app.content_rights_declaration.inspect}" unless app.content_rights_declaration == STORE_SETTINGS[:content_rights]
+    problems << "primary category #{info.primary_category&.id.inspect}" unless info.primary_category&.id == STORE_SETTINGS[:primary_category]
+    problems << "secondary category #{info.secondary_category&.id.inspect}" unless info.secondary_category&.id == STORE_SETTINGS[:secondary_category]
+    wanted.each { |k, v| problems << "age rating #{k}=#{remote_age[k].inspect}" unless remote_age[k] == v }
+    UI.user_error!("Store settings differ on App Store Connect: #{problems.join(', ')}") unless problems.empty?
+    UI.success("Store settings verified (age rating #{info.app_store_age_rating || 'pending calculation'}).")
   end
 
   desc "Upload App Store listing metadata from fastlane/metadata without submitting for review"
