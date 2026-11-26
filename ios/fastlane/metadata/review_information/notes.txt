@@ -1,0 +1,12 @@
+Tocamatrol is a remote control for a computer. It needs a small USB dongle: an ESP32-S3 board (for example a LILYGO T-Dongle-S3) flashed with our free, open-source firmware from https://ryancummings.github.io/tocamatrol/. The dongle plugs into a Mac, Windows or Linux computer and appears to it as a standard USB keyboard and mouse. The app sends keystrokes, pointer movement and scrolling to the dongle over bonded Bluetooth LE. There is no account, login, server or in-app purchase. Source code: https://github.com/ryancummings/tocamatrol
+
+Without a dongle, the macro pad and trackpad cannot send input, and the status shows "No dongle". Everything else in the app works and can be reviewed:
+
+1. Keys tab: the Starter page shows example macro buttons. Tap an empty cell (+) to put a macro on it.
+2. Tap Edit (top right) to open Pages & Macros. Add, rename, duplicate, reorder or delete pages.
+3. Open a page to edit its grid: change the grid size up to 8x6, hold and drag a button to move it, and drag the corner grip to resize it. Tap a button to change its color, typeface and caption.
+4. In Pages & Macros, tap + (New Macro) to build a multi-step macro from keyboard shortcuts, typed text and timed pauses, or record one with the built-in keyboard.
+5. Pad tab: the trackpad surface and gesture guide. Settings (gear): theme, trackpad speed and scrolling options, export or import pages and macros as a JSON file, and an optional Face ID / passcode lock.
+6. Tap the dongle chip (top left) to open the Dongle screen, which lists nearby dongles and pairs with one.
+
+Bluetooth permission is used only to find and connect to the dongle. The app collects no data.

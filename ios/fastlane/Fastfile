@@ -230,6 +230,49 @@ platform :ios do
     end
   end
 
+  desc "Set App Review information on the editable version: notes from " \
+       "metadata/review_information/notes.txt, contact from REVIEW_FIRST_NAME, REVIEW_LAST_NAME, " \
+       "REVIEW_PHONE and REVIEW_EMAIL in fastlane/.env (kept out of the public repo). Idempotent."
+  lane :review_info do
+    version = require_asc_release!.editable_version(required: true)
+    contact = %w[REVIEW_FIRST_NAME REVIEW_LAST_NAME REVIEW_PHONE REVIEW_EMAIL].to_h { |k| [k, ENV[k].to_s.strip] }
+    missing = contact.select { |_, v| v.empty? }.keys
+    UI.user_error!("Set #{missing.join(', ')} in fastlane/.env") unless missing.empty?
+    attributes = {
+      contact_first_name: contact["REVIEW_FIRST_NAME"],
+      contact_last_name: contact["REVIEW_LAST_NAME"],
+      contact_phone: contact["REVIEW_PHONE"],
+      contact_email: contact["REVIEW_EMAIL"],
+      demo_account_required: false,
+      notes: File.read(File.join(METADATA_DIR, "review_information", "notes.txt")).strip
+    }
+    # A first version has no review detail yet, and fetching one raises "No data".
+    detail = begin
+      version.fetch_app_store_review_detail
+    rescue RuntimeError => e
+      raise unless e.message.include?("No data")
+
+      nil
+    end
+    if detail
+      changed = attributes.reject { |k, v| detail.send(k) == v }
+      if changed.empty?
+        UI.message("App Review information already up to date")
+      else
+        Spaceship::ConnectAPI.patch_app_store_review_detail(app_store_review_detail_id: detail.id,
+                                                            attributes: camel_attributes(changed))
+      end
+    else
+      Spaceship::ConnectAPI.post_app_store_review_detail(app_store_version_id: version.id,
+                                                         attributes: camel_attributes(attributes))
+    end
+
+    remote = version.fetch_app_store_review_detail
+    drift = attributes.keys.reject { |k| remote.send(k) == attributes[k] }
+    UI.user_error!("App Review information differs on App Store Connect: #{drift.join(', ')}") unless drift.empty?
+    UI.success("App Review information verified on #{version.version_string} (#{attributes[:notes].length} characters of notes).")
+  end
+
   desc "Upload App Store listing metadata from fastlane/metadata without submitting for review"
   lane :sync_metadata do
     require_asc_release!.upload_metadata!
@@ -268,6 +311,11 @@ def check_checkout!
 
   UI.user_error!("This checkout is not GitHub main. Run `git switch main && git pull --ff-only`, " \
                  "or pass branch:true to build it anyway.")
+end
+
+# The raw App Store Connect API takes camelCase names; Spaceship models read snake_case.
+def camel_attributes(attributes)
+  attributes.transform_keys { |k| k.to_s.gsub(/_([a-z])/) { Regexp.last_match(1).upcase } }
 end
 
 def ensure_shot_devices(names)
