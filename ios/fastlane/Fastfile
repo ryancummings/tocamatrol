@@ -149,7 +149,7 @@ platform :ios do
   end
 
   desc "Render Ink & Pop comic App Store posters from fastlane/screenshots/en-US into fastlane/deliver_screenshots/en-US."
-  lane :frame_screenshots do
+  lane :frame_posters do
     sh("python3", File.join(FASTLANE_DIR, "frame_posters.py"))
   end
 
@@ -220,6 +220,14 @@ platform :ios do
     require_asc_release!.recent_builds.each do |b|
       UI.message("#{b.pre_release_version&.version} (#{b.version})  #{b.processing_state}  #{b.uploaded_date}")
     end
+  end
+
+  desc "Attach a processed TestFlight build to the editable App Store version (does NOT submit for review)."
+  lane :attach_build do |options|
+    require_asc_release!.attach_build!(
+      marketing_version: options[:version] || "1.0",
+      build_number: options[:build]
+    )
   end
 end
 
