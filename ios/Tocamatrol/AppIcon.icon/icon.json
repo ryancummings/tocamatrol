@@ -1,0 +1,180 @@
+{
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "display-p3:0.98500,0.98200,0.96800,1.00000",
+          "display-p3:0.93000,0.92400,0.90800,1.00000"
+        ]
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "display-p3:0.10500,0.14500,0.31000,1.00000",
+          "display-p3:0.04200,0.06000,0.14500,1.00000"
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "layers": [
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"
+          },
+          "glass": true,
+          "image-name": "emitter-dot.svg",
+          "name": "Remote Transmitter Dot"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:1.00000,0.52000,0.12000,1.00000"
+          },
+          "glass": true,
+          "image-name": "rx-wave-1.svg",
+          "name": "Incoming Wave 1"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"
+          },
+          "glass": true,
+          "image-name": "rx-wave-2.svg",
+          "name": "Incoming Wave 2"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.16000,0.88000,0.42000,1.00000"
+          },
+          "glass": true,
+          "image-name": "status-led.svg",
+          "name": "Status LED"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"
+          },
+          "glass": true,
+          "image-name": "key-tl.svg",
+          "name": "KEY-TL"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.06000,0.84000,0.96000,1.00000"
+          },
+          "glass": true,
+          "image-name": "key-tr.svg",
+          "name": "KEY-TR"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.15000,0.84000,0.38000,1.00000"
+          },
+          "glass": true,
+          "image-name": "key-bl.svg",
+          "name": "KEY-BL"
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:1.00000,0.72000,0.10000,1.00000"
+          },
+          "glass": true,
+          "image-name": "key-br.svg",
+          "name": "KEY-BR"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.42
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.28
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill": {
+            "solid": "display-p3:0.06500,0.08500,0.16500,1.00000"
+          },
+          "glass": true,
+          "image-name": "bezel.svg",
+          "name": "Macro Screen Bezel",
+          "opacity": 0.92
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.3
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.10000,0.52000,0.99000,1.00000"
+          },
+          "glass": true,
+          "image-name": "barrel.svg",
+          "name": "USB Receiver Body"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.48
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.45
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "automatic-gradient": "display-p3:0.42000,0.48000,0.59000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "automatic-gradient": "display-p3:0.74000,0.80000,0.90000,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "usb-plug.svg",
+          "name": "USB-A Connector"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.54
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.22
+      }
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}
