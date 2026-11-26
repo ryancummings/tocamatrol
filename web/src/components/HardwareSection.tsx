@@ -1,5 +1,5 @@
-import { Check, Cpu, X } from "lucide-react";
-import { BOARDS, INCOMPATIBLE_CHIPS } from "../data/boards";
+import { Check, Cpu, ShoppingCart, X } from "lucide-react";
+import { AMAZON_DISCLOSURE, BOARDS, INCOMPATIBLE_CHIPS, amazonBuyUrl } from "../data/boards";
 
 interface HardwareSectionProps {
   onPickBoardForFlash: (id: string) => void;
@@ -16,6 +16,9 @@ export function HardwareSection({ onPickBoardForFlash }: HardwareSectionProps) {
         <strong className="text-ink">Bluetooth Low Energy</strong> to talk to your iPhone or iPad and{" "}
         <strong className="text-ink">native USB-OTG</strong> to enumerate as a standard USB HID mouse and
         keyboard with zero drivers on Windows, macOS, and&nbsp;Linux.
+      </p>
+      <p className="mt-2 max-w-[65ch] text-xs text-dim">
+        Buy links go to Amazon. {AMAZON_DISCLOSURE}
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -46,8 +49,16 @@ export function HardwareSection({ onPickBoardForFlash }: HardwareSectionProps) {
                 </div>
               </dl>
             </div>
-            <div className="mt-4 flex items-center justify-between border-t-2 border-hairline pt-3">
-              <span className="font-mono text-xs text-dim">env: {board.pioEnv}</span>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-hairline pt-3">
+              <a
+                href={amazonBuyUrl(board)}
+                target="_blank"
+                rel="sponsored noopener noreferrer"
+                className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-accent hover:underline"
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Buy on Amazon ↗
+              </a>
               <a
                 href="#flash"
                 onClick={() => onPickBoardForFlash(board.id)}

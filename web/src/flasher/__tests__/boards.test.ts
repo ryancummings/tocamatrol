@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BOARDS, INCOMPATIBLE_CHIPS } from "../../data/boards";
+import { AMAZON_ASSOCIATE_TAG, BOARDS, INCOMPATIBLE_CHIPS, amazonBuyUrl } from "../../data/boards";
 
 describe("boards.json hardware catalog", () => {
   const repoRoot = resolve(process.cwd(), "..");
@@ -29,6 +29,16 @@ describe("boards.json hardware catalog", () => {
 
     for (const board of BOARDS) {
       expect(defaultEnvs).toContain(board.pioEnv);
+    }
+  });
+
+  it("gives every board a tagged Amazon buy link", () => {
+    const asins = new Set<string>();
+    for (const board of BOARDS) {
+      expect(board.amazonAsin).toMatch(/^B0[A-Z0-9]{8}$/);
+      expect(asins.has(board.amazonAsin)).toBe(false);
+      asins.add(board.amazonAsin);
+      expect(amazonBuyUrl(board)).toBe(`https://www.amazon.com/dp/${board.amazonAsin}?tag=${AMAZON_ASSOCIATE_TAG}`);
     }
   });
 

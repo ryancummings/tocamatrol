@@ -12,6 +12,7 @@ export interface BoardSpec {
   pcPortNote: string;
   bootInstructions: string[];
   flashFilename: string;
+  amazonAsin: string;
   notes: string;
 }
 
@@ -30,6 +31,15 @@ export interface StatusGuideRow {
 }
 
 export const BOARDS: BoardSpec[] = catalog.boards;
+
+/** Amazon Associates store ID. Its sites (oneradstudio.com, ryancummings.github.io) are registered in Associates Central. */
+export const AMAZON_ASSOCIATE_TAG = "ryancummings-20";
+
+export const AMAZON_DISCLOSURE = "As an Amazon Associate I earn from qualifying purchases.";
+
+export function amazonBuyUrl(board: Pick<BoardSpec, "amazonAsin">): string {
+  return `https://www.amazon.com/dp/${board.amazonAsin}?tag=${AMAZON_ASSOCIATE_TAG}`;
+}
 
 export const INCOMPATIBLE_CHIPS: IncompatibleChip[] = [
   {

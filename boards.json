@@ -18,6 +18,7 @@
         "After flashing completes, unplug the dongle and plug it back in normally."
       ],
       "flashFilename": "tocamatrol-t-dongle-s3.bin",
+      "amazonAsin": "B0BK9162QY",
       "notes": "Recommended all-in-one USB stick with built-in status screen showing connection state, pairing timer, and device code."
     },
     {
@@ -37,6 +38,7 @@
         "After flashing, unplug and replug the board (or press R) without holding B."
       ],
       "flashFilename": "tocamatrol-xiao-esp32s3.bin",
+      "amazonAsin": "B0BYSB66S5",
       "notes": "Thumb-sized USB-C board. Has no screen, so status is shown by the onboard LED blink pattern."
     },
     {
@@ -55,6 +57,7 @@
         "After flashing finishes, move your USB cable to the port labeled USB to use it with your PC."
       ],
       "flashFilename": "tocamatrol-devkitc-s3-n8.bin",
+      "amazonAsin": "B0BVVGNBB3",
       "notes": "For standard N8/N4 modules without octal PSRAM. Use the N16R8 / N8R8 build if your module has octal PSRAM (R8)."
     },
     {
@@ -73,6 +76,7 @@
         "To use as a dongle, plug the port labeled USB into your computer."
       ],
       "flashFilename": "tocamatrol-devkitc-s3.bin",
+      "amazonAsin": "B0FPLVCTQD",
       "notes": "Configured with octal PSRAM (qio_opi) required by ESP32-S3-WROOM-1 N16R8 and N8R8 modules. RGB LED is on GPIO 48 (GPIO 38 on v1.1 boards)."
     }
   ]
