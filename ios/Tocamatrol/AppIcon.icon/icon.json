@@ -3,8 +3,8 @@
     {
       "value": {
         "linear-gradient": [
-          "display-p3:0.98500,0.98200,0.96800,1.00000",
-          "display-p3:0.93000,0.92400,0.90800,1.00000"
+          "display-p3:1.00000,0.96800,0.87500,1.00000",
+          "display-p3:0.99200,0.90200,0.61000,1.00000"
         ]
       }
     },
@@ -12,8 +12,8 @@
       "appearance": "dark",
       "value": {
         "linear-gradient": [
-          "display-p3:0.10500,0.14500,0.31000,1.00000",
-          "display-p3:0.04200,0.06000,0.14500,1.00000"
+          "display-p3:0.10500,0.14500,0.34500,1.00000",
+          "display-p3:0.04200,0.05600,0.13500,1.00000"
         ]
       }
     }
@@ -22,32 +22,69 @@
     {
       "layers": [
         {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.08200,0.07500,0.06700,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.03000,0.04200,0.10000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "waves-ink.svg",
+          "name": "Signal Comic Ink Outlines",
+          "opacity": 0.94
+        },
+        {
           "fill": {
-            "automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"
+            "automatic-gradient": "display-p3:0.87500,0.16100,0.12500,1.00000"
           },
           "glass": true,
           "image-name": "emitter-dot.svg",
-          "name": "Remote Transmitter Dot"
+          "name": "Remote Emitter Dot"
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:1.00000,0.52000,0.12000,1.00000"
+            "automatic-gradient": "display-p3:1.00000,0.45100,0.08200,1.00000"
           },
           "glass": true,
           "image-name": "rx-wave-1.svg",
-          "name": "Incoming Wave 1"
+          "name": "Incoming Wave Inner"
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"
+            "automatic-gradient": "display-p3:1.00000,0.82400,0.12200,1.00000"
           },
           "glass": true,
           "image-name": "rx-wave-2.svg",
-          "name": "Incoming Wave 2"
+          "name": "Incoming Wave Outer"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.08200,0.07500,0.06700,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.03000,0.04200,0.10000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "status-led-ink.svg",
+          "name": "Status LED Ink Ring"
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:0.16000,0.88000,0.42000,1.00000"
+            "automatic-gradient": "display-p3:0.16000,0.90000,0.44000,1.00000"
           },
           "glass": true,
           "image-name": "status-led.svg",
@@ -55,7 +92,7 @@
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"
+            "automatic-gradient": "display-p3:0.87500,0.16100,0.12500,1.00000"
           },
           "glass": true,
           "image-name": "key-tl.svg",
@@ -63,7 +100,7 @@
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:0.06000,0.84000,0.96000,1.00000"
+            "automatic-gradient": "display-p3:0.06000,0.77300,0.87100,1.00000"
           },
           "glass": true,
           "image-name": "key-tr.svg",
@@ -71,7 +108,7 @@
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:0.15000,0.84000,0.38000,1.00000"
+            "automatic-gradient": "display-p3:0.13300,0.76900,0.27800,1.00000"
           },
           "glass": true,
           "image-name": "key-bl.svg",
@@ -79,16 +116,75 @@
         },
         {
           "fill": {
-            "automatic-gradient": "display-p3:1.00000,0.72000,0.10000,1.00000"
+            "automatic-gradient": "display-p3:1.00000,0.82400,0.12200,1.00000"
           },
           "glass": true,
           "image-name": "key-br.svg",
           "name": "KEY-BR"
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.08200,0.07500,0.06700,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.03900,0.05500,0.12500,1.00000"
+              }
+            }
+          ],
+          "glass": true,
+          "image-name": "bezel.svg",
+          "name": "Comic Key-Well Bezel",
+          "opacity": 0.96
         }
       ],
       "shadow": {
         "kind": "neutral",
         "opacity": 0.42
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.24
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.08200,0.07500,0.06700,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.03000,0.04200,0.10000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "barrel-ink.svg",
+          "name": "Receiver Body Ink Outline",
+          "opacity": 0.95
+        },
+        {
+          "fill": {
+            "automatic-gradient": "display-p3:0.10200,0.35700,0.87800,1.00000"
+          },
+          "glass": true,
+          "image-name": "barrel.svg",
+          "name": "USB Receiver Body (Hero Cobalt)"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.45
       },
       "specular": true,
       "translucency": {
@@ -99,59 +195,35 @@
     {
       "layers": [
         {
-          "fill": {
-            "solid": "display-p3:0.06500,0.08500,0.16500,1.00000"
-          },
-          "glass": true,
-          "image-name": "bezel.svg",
-          "name": "Macro Screen Bezel",
-          "opacity": 0.92
-        }
-      ],
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0.25
-      },
-      "specular": true,
-      "translucency": {
-        "enabled": true,
-        "value": 0.3
-      }
-    },
-    {
-      "layers": [
-        {
-          "fill": {
-            "automatic-gradient": "display-p3:0.10000,0.52000,0.99000,1.00000"
-          },
-          "glass": true,
-          "image-name": "barrel.svg",
-          "name": "USB Receiver Body"
-        }
-      ],
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0.48
-      },
-      "specular": true,
-      "translucency": {
-        "enabled": true,
-        "value": 0.45
-      }
-    },
-    {
-      "layers": [
-        {
           "fill-specializations": [
             {
               "value": {
-                "automatic-gradient": "display-p3:0.42000,0.48000,0.59000,1.00000"
+                "solid": "display-p3:0.08200,0.07500,0.06700,1.00000"
               }
             },
             {
               "appearance": "dark",
               "value": {
-                "automatic-gradient": "display-p3:0.74000,0.80000,0.90000,1.00000"
+                "solid": "display-p3:0.03000,0.04200,0.10000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "usb-plug-ink.svg",
+          "name": "USB-A Connector Ink Outline",
+          "opacity": 0.95
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "automatic-gradient": "display-p3:0.78500,0.83000,0.90000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "automatic-gradient": "display-p3:0.83000,0.87500,0.95500,1.00000"
               }
             }
           ],
@@ -162,12 +234,58 @@
       ],
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.54
+        "opacity": 0.48
       },
       "specular": true,
       "translucency": {
         "enabled": true,
-        "value": 0.22
+        "value": 0.2
+      }
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.08200,0.07500,0.06700,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.03000,0.04200,0.10000,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "comic-drop.svg",
+          "name": "Hard Offset Comic Block",
+          "opacity": 0.9
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "display-p3:0.08200,0.07500,0.06700,0.08500"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.33700,0.65900,1.00000,0.14000"
+              }
+            }
+          ],
+          "glass": false,
+          "image-name": "halftone.svg",
+          "name": "Ben-Day Comic Halftone"
+        }
+      ],
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0.0
       }
     }
   ],

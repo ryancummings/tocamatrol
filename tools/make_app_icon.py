@@ -2,9 +2,10 @@
 """
 Generate Tocamatrol's native Apple Icon Composer bundle at `ios/Tocamatrol/AppIcon.icon`.
 
-Design: 45° Liquid Glass USB-A receiver dongle in anodized steel & cobalt glass housing
-a 2x2 Pop-Art macro screen, with incoming wireless signal arcs curving inward from a
-remote emitter dot. Adapts cleanly across Default, Dark, Clear, and Tinted appearances.
+Design: Ink & Pop meets Liquid Glass — a 45° USB-A receiver dongle framed in bold
+India-ink keylines (Electric Cobalt in Dark Mode) over Bright Newsprint / Dark Electric
+Comic Ben-Day halftone paper, housing a dark ink key-well with 2x2 Pop-Art macro tiles
+and bold comic wireless reception arcs curving inward from a remote emitter dot.
 """
 
 import json
@@ -92,6 +93,62 @@ def rotated_rect_subpath(
     return poly_bezier_subpath(pts, r_list, clockwise=clockwise)
 
 
+def rotated_ring_subpath(
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    radii: tuple[float, float, float, float] | float,
+    stroke_out: float,
+    stroke_in: float = 3.0,
+    cx: float = 512.0,
+    cy: float = 512.0,
+    deg: float = 0.0,
+) -> str:
+    """Hollow evenodd comic ink outline collar hugging a rotated rounded rect."""
+    r_list = [float(radii)] * 4 if isinstance(radii, (int, float)) else [float(r) for r in radii]
+    outer_r = tuple(r + stroke_out for r in r_list)
+    inner_r = tuple(max(0.0, r - stroke_in) for r in r_list)
+    outer = rotated_rect_subpath(
+        x - stroke_out,
+        y - stroke_out,
+        w + 2 * stroke_out,
+        h + 2 * stroke_out,
+        outer_r,
+        cx,
+        cy,
+        deg,
+        clockwise=True,
+    )
+    inner = rotated_rect_subpath(
+        x + stroke_in,
+        y + stroke_in,
+        w - 2 * stroke_in,
+        h - 2 * stroke_in,
+        inner_r,
+        cx,
+        cy,
+        deg,
+        clockwise=False,
+    )
+    return f"{outer} {inner}"
+
+
+def circle_ring_subpath(cx: float, cy: float, r_outer: float, r_inner: float) -> str:
+    """Hollow evenodd circular ring."""
+    out = (
+        f"M {cx + r_outer:.2f} {cy:.2f} "
+        f"A {r_outer:.2f} {r_outer:.2f} 0 1 1 {cx - r_outer:.2f} {cy:.2f} "
+        f"A {r_outer:.2f} {r_outer:.2f} 0 1 1 {cx + r_outer:.2f} {cy:.2f} Z"
+    )
+    inn = (
+        f"M {cx + r_inner:.2f} {cy:.2f} "
+        f"A {r_inner:.2f} {r_inner:.2f} 0 1 0 {cx - r_inner:.2f} {cy:.2f} "
+        f"A {r_inner:.2f} {r_inner:.2f} 0 1 0 {cx + r_inner:.2f} {cy:.2f} Z"
+    )
+    return f"{out} {inn}"
+
+
 def rounded_arc_path(
     cx: float,
     cy: float,
@@ -99,6 +156,7 @@ def rounded_arc_path(
     thickness: float,
     start_deg: float,
     end_deg: float,
+    clockwise: bool = True,
 ) -> str:
     """Closed round-capped thick arc centered at (cx, cy)."""
     r_in = r_mid - thickness / 2
@@ -114,59 +172,180 @@ def rounded_arc_path(
     ix1, iy1 = cx + r_in * math.cos(a1), cy + r_in * math.sin(a1)
     ix0, iy0 = cx + r_in * math.cos(a0), cy + r_in * math.sin(a0)
 
+    if clockwise:
+        return " ".join(
+            [
+                f"M {ox0:.2f} {oy0:.2f}",
+                f"A {r_out:.2f} {r_out:.2f} 0 {large_arc} 1 {ox1:.2f} {oy1:.2f}",
+                f"A {cap_r:.2f} {cap_r:.2f} 0 0 1 {ix1:.2f} {iy1:.2f}",
+                f"A {r_in:.2f} {r_in:.2f} 0 {large_arc} 0 {ix0:.2f} {iy0:.2f}",
+                f"A {cap_r:.2f} {cap_r:.2f} 0 0 1 {ox0:.2f} {oy0:.2f}",
+                "Z",
+            ]
+        )
     return " ".join(
         [
             f"M {ox0:.2f} {oy0:.2f}",
-            f"A {r_out:.2f} {r_out:.2f} 0 {large_arc} 1 {ox1:.2f} {oy1:.2f}",
-            f"A {cap_r:.2f} {cap_r:.2f} 0 0 1 {ix1:.2f} {iy1:.2f}",
-            f"A {r_in:.2f} {r_in:.2f} 0 {large_arc} 0 {ix0:.2f} {iy0:.2f}",
-            f"A {cap_r:.2f} {cap_r:.2f} 0 0 1 {ox0:.2f} {oy0:.2f}",
+            f"A {cap_r:.2f} {cap_r:.2f} 0 0 0 {ix0:.2f} {iy0:.2f}",
+            f"A {r_in:.2f} {r_in:.2f} 0 {large_arc} 1 {ix1:.2f} {iy1:.2f}",
+            f"A {cap_r:.2f} {cap_r:.2f} 0 0 0 {ox1:.2f} {oy1:.2f}",
+            f"A {r_out:.2f} {r_out:.2f} 0 {large_arc} 0 {ox0:.2f} {oy0:.2f}",
             "Z",
         ]
     )
+
+
+def rounded_arc_collar_path(
+    cx: float,
+    cy: float,
+    r_mid: float,
+    inner_thickness: float,
+    pad: float,
+    start_deg: float,
+    end_deg: float,
+) -> str:
+    """Hollow evenodd comic ink outline collar around a round-capped thick arc."""
+    outer = rounded_arc_path(cx, cy, r_mid, inner_thickness + 2 * pad, start_deg, end_deg, clockwise=True)
+    inner = rounded_arc_path(cx, cy, r_mid, max(4.0, inner_thickness - 4.0), start_deg, end_deg, clockwise=False)
+    return f"{outer} {inner}"
+
+
+def halftone_dots_path() -> str:
+    """Staggered comic Ben-Day halftone pattern matching Theme.swift HalftoneBackground."""
+    spacing = 64.0
+    r = 9.0
+    parts: list[str] = []
+    cols = int(1024 / spacing) + 2
+    rows = int(1024 / spacing) + 2
+    for row in range(rows):
+        x_off = 0.0 if row % 2 == 0 else spacing / 2.0
+        y = row * spacing + 16.0
+        for col in range(cols):
+            x = col * spacing + x_off + 8.0
+            parts.append(
+                f"M {x + r:.1f} {y:.1f} "
+                f"A {r:.1f} {r:.1f} 0 1 1 {x - r:.1f} {y:.1f} "
+                f"A {r:.1f} {r:.1f} 0 1 1 {x + r:.1f} {y:.1f} Z"
+            )
+    return " ".join(parts)
 
 
 def build_app_icon() -> Path:
     cx, cy, ang = 512.0, 512.0, -45.0
     assets: dict[str, str] = {}
 
-    # Backmost hardware layer: Machined USB-A connector (u: -368..-166, v: ±104) with 2 CCW pinholes
-    plug_outer = rotated_rect_subpath(512 - 368, 512 - 104, 202, 208, (26, 12, 12, 26), cx, cy, ang, clockwise=True)
-    hole_t = rotated_rect_subpath(512 - 322, 512 - 66, 70, 48, 8, cx, cy, ang, clockwise=False)
-    hole_b = rotated_rect_subpath(512 - 322, 512 + 18, 70, 48, 8, cx, cy, ang, clockwise=False)
+    # 1. Staggered comic Ben-Day halftone texture across the newsprint / electric-comic field.
+    assets["halftone.svg"] = svg_wrap(f'<path d="{halftone_dots_path()}" fill="#FFFFFF"/>')
+
+    # 2. Machined USB-A connector (u: -374..-180.65, v: +-102) contoured to butt flush
+    #    against the receiver barrel's curved left shoulder so zero plug edge shows inside glass.
+    plug_corners = [
+        rotate_pt(512 - 374, 512 - 102, cx, cy, ang),
+        rotate_pt(512 - 180.65, 512 - 102, cx, cy, ang),
+        rotate_pt(512 - 184, 512 - 80, cx, cy, ang),
+        rotate_pt(512 - 184, 512 + 80, cx, cy, ang),
+        rotate_pt(512 - 180.65, 512 + 102, cx, cy, ang),
+        rotate_pt(512 - 374, 512 + 102, cx, cy, ang),
+    ]
+    plug_radii = [26.0, 2.0, 2.0, 2.0, 2.0, 26.0]
+    plug_outer = poly_bezier_subpath(plug_corners, plug_radii, clockwise=True)
+    h_t_box = (512 - 326, 512 - 64, 68, 46, 8)
+    h_b_box = (512 - 326, 512 + 18, 68, 46, 8)
+    hole_t = rotated_rect_subpath(*h_t_box, cx, cy, ang, clockwise=False)
+    hole_b = rotated_rect_subpath(*h_b_box, cx, cy, ang, clockwise=False)
     assets["usb-plug.svg"] = svg_wrap(
         f'<path d="{plug_outer} {hole_t} {hole_b}" fill="#FFFFFF" fill-rule="evenodd"/>'
     )
 
-    # Middle shell: Cobalt Liquid Glass Dongle Housing (u: -184..+186 => w=370, h=308, rx=76)
+    plug_ink_corners = [
+        rotate_pt(512 - 385, 512 - 113, cx, cy, ang),
+        rotate_pt(512 - 178, 512 - 113, cx, cy, ang),
+        rotate_pt(512 - 178, 512 + 113, cx, cy, ang),
+        rotate_pt(512 - 385, 512 + 113, cx, cy, ang),
+    ]
+    plug_ink_outer = poly_bezier_subpath(plug_ink_corners, [37.0, 2.0, 2.0, 37.0], clockwise=True)
+    plug_ink_inner = poly_bezier_subpath(
+        [
+            rotate_pt(512 - 371, 512 - 99, cx, cy, ang),
+            rotate_pt(512 - 186, 512 - 99, cx, cy, ang),
+            rotate_pt(512 - 186, 512 + 99, cx, cy, ang),
+            rotate_pt(512 - 371, 512 + 99, cx, cy, ang),
+        ],
+        [23.0, 2.0, 2.0, 23.0],
+        clockwise=False,
+    )
+    hole_t_ink = rotated_ring_subpath(*h_t_box, 10, 2, cx, cy, ang)
+    hole_b_ink = rotated_ring_subpath(*h_b_box, 10, 2, cx, cy, ang)
+    assets["usb-plug-ink.svg"] = svg_wrap(
+        f'<path d="{plug_ink_outer} {plug_ink_inner} {hole_t_ink} {hole_b_ink}" fill="#FFFFFF" fill-rule="evenodd"/>'
+    )
+
+    # 3. Hero Cobalt Receiver Housing (u: -184..+186, v: +-154) + bold India-ink comic collar
+    bar_x, bar_y, bar_w, bar_h, bar_r = 512 - 184, 512 - 154, 370, 308, 74
     assets["barrel.svg"] = svg_wrap(
-        f'<path d="{rotated_rect_subpath(512 - 184, 512 - 154, 370, 308, 76, cx, cy, ang)}" fill="#FFFFFF"/>'
+        f'<path d="{rotated_rect_subpath(bar_x, bar_y, bar_w, bar_h, bar_r, cx, cy, ang)}" fill="#FFFFFF"/>'
+    )
+    assets["barrel-ink.svg"] = svg_wrap(
+        f'<path d="{rotated_ring_subpath(bar_x, bar_y, bar_w, bar_h, bar_r, 12, 4, cx, cy, ang)}" '
+        'fill="#FFFFFF" fill-rule="evenodd"/>'
     )
 
-    # Dark translucent screen bezel inset on barrel (u: -92..+144 => w=236, v: ±118, rx=44)
+    # 4. Hard-offset comic drop shadow tucked strictly outside the bottom-right silhouette
+    sdx, sdy = 512 + 18, 512 + 22
+    bar_shadow_outer = rotated_rect_subpath(bar_x, bar_y, bar_w, bar_h, bar_r, sdx, sdy, ang, clockwise=True)
+    bar_shadow_cut = rotated_rect_subpath(bar_x + 4, bar_y + 4, bar_w - 8, bar_h - 8, bar_r - 4, cx, cy, ang, clockwise=False)
+    plug_shadow_outer = poly_bezier_subpath(
+        [
+            rotate_pt(512 - 374, 512 - 102, sdx, sdy, ang),
+            rotate_pt(512 - 184, 512 - 102, sdx, sdy, ang),
+            rotate_pt(512 - 184, 512 + 102, sdx, sdy, ang),
+            rotate_pt(512 - 374, 512 + 102, sdx, sdy, ang),
+        ],
+        [26.0, 2.0, 2.0, 26.0],
+        clockwise=True,
+    )
+    plug_shadow_cut = poly_bezier_subpath(
+        [
+            rotate_pt(512 - 370, 512 - 98, cx, cy, ang),
+            rotate_pt(512 - 186, 512 - 98, cx, cy, ang),
+            rotate_pt(512 - 186, 512 + 98, cx, cy, ang),
+            rotate_pt(512 - 370, 512 + 98, cx, cy, ang),
+        ],
+        [22.0, 2.0, 2.0, 22.0],
+        clockwise=False,
+    )
+    assets["comic-drop.svg"] = svg_wrap(
+        f'<path d="{bar_shadow_outer} {bar_shadow_cut} {plug_shadow_outer} {plug_shadow_cut}" fill="#FFFFFF" fill-rule="evenodd"/>'
+    )
+
+    # 5. Deep India-Ink key-well bezel around the 2x2 Pop-Art macro keycaps (u: -90..+146, v: +-118)
+    bez_x, bez_y, bez_w, bez_h, bez_r = 512 - 90, 512 - 118, 236, 236, 42
     assets["bezel.svg"] = svg_wrap(
-        f'<path d="{rotated_rect_subpath(512 - 92, 512 - 118, 236, 236, 44, cx, cy, ang)}" fill="#FFFFFF"/>'
+        f'<path d="{rotated_rect_subpath(bez_x, bez_y, bez_w, bez_h, bez_r, cx, cy, ang)}" fill="#FFFFFF"/>'
     )
 
-    # Emerald connected status LED clear of USB shoulder overlap (u=-130, v=0)
-    lx, ly = rotate_pt(512 - 130, 512, cx, cy, ang)
+    # 6. Power Emerald LED + hollow ink collar (u=-132, v=0)
+    lx, ly = rotate_pt(512 - 132, 512, cx, cy, ang)
     assets["status-led.svg"] = svg_wrap(f'<circle cx="{lx:.2f}" cy="{ly:.2f}" r="18" fill="#FFFFFF"/>')
+    assets["status-led-ink.svg"] = svg_wrap(
+        f'<path d="{circle_ring_subpath(lx, ly, 25, 14)}" fill="#FFFFFF" fill-rule="evenodd"/>'
+    )
 
-    # Front 2x2 Pop-Art macro tiles inside bezel (centered at u=+26, v=0; k=84, g=16)
-    k, g = 84, 16
-    u0 = 512 + 26 - (2 * k + g) / 2
+    # 7. Four Ink & Pop macro keycaps matching Theme.swift KeyStyle (cyan, yellow, vermilion, green)
+    k, g = 82, 18
+    u0 = 512 + 28 - (2 * k + g) / 2
     v0 = 512 - (2 * k + g) / 2
     tiles = [
-        ("key-tl", u0, v0, "display-p3:0.96000,0.23000,0.18000,1.00000"),
-        ("key-tr", u0 + k + g, v0, "display-p3:0.06000,0.84000,0.96000,1.00000"),
-        ("key-bl", u0, v0 + k + g, "display-p3:0.15000,0.84000,0.38000,1.00000"),
-        ("key-br", u0 + k + g, v0 + k + g, "display-p3:1.00000,0.72000,0.10000,1.00000"),
+        ("key-tl", u0, v0, "display-p3:0.87500,0.16100,0.12500,1.00000"),          # Hero Vermilion (#DF2920)
+        ("key-tr", u0 + k + g, v0, "display-p3:0.06000,0.77300,0.87100,1.00000"),  # Electric Cyan (#0FC5DE)
+        ("key-bl", u0, v0 + k + g, "display-p3:0.13300,0.76900,0.27800,1.00000"),  # Power Emerald (#22C447)
+        ("key-br", u0 + k + g, v0 + k + g, "display-p3:1.00000,0.82400,0.12200,1.00000"),  # Sunburst Yellow (#FFD21F)
     ]
     tile_layers = []
     for tid, ux, vy, p3 in tiles:
         fname = f"{tid}.svg"
         assets[fname] = svg_wrap(
-            f'<path d="{rotated_rect_subpath(ux, vy, k, k, 22, cx, cy, ang)}" fill="#FFFFFF"/>'
+            f'<path d="{rotated_rect_subpath(ux, vy, k, k, 20, cx, cy, ang)}" fill="#FFFFFF"/>'
         )
         tile_layers.append(
             {
@@ -177,23 +356,35 @@ def build_app_icon() -> Path:
             }
         )
 
-    # Top-right Emitter dot (u=+384, v=0) + incoming waves radiating SW into dongle nose
-    ex, ey = rotate_pt(512 + 384, 512, cx, cy, ang)
-    assets["emitter-dot.svg"] = svg_wrap(f'<circle cx="{ex:.2f}" cy="{ey:.2f}" r="26" fill="#FFFFFF"/>')
+    # 8. Top-right wireless emitter dot + incoming SW reception arcs + hollow India-ink collars
+    ex, ey = rotate_pt(512 + 382, 512, cx, cy, ang)
+    assets["emitter-dot.svg"] = svg_wrap(f'<circle cx="{ex:.2f}" cy="{ey:.2f}" r="25" fill="#FFFFFF"/>')
     assets["rx-wave-1.svg"] = svg_wrap(
         f'<path d="{rounded_arc_path(ex, ey, 84, 24, 96, 174)}" fill="#FFFFFF"/>'
     )
     assets["rx-wave-2.svg"] = svg_wrap(
         f'<path d="{rounded_arc_path(ex, ey, 148, 24, 96, 174)}" fill="#FFFFFF"/>'
     )
+    waves_ink = " ".join(
+        [
+            circle_ring_subpath(ex, ey, 33, 21),
+            rounded_arc_collar_path(ex, ey, 84, 24, 8, 96, 174),
+            rounded_arc_collar_path(ex, ey, 148, 24, 8, 96, 174),
+        ]
+    )
+    assets["waves-ink.svg"] = svg_wrap(f'<path d="{waves_ink}" fill="#FFFFFF" fill-rule="evenodd"/>')
+
+    # Spec mirrors Theme.swift (Bright Newsprint / Dark Electric Comic, unified KeyStyle ink keylines)
+    ink_light = "display-p3:0.08200,0.07500,0.06700,1.00000"    # #151311 India Ink
+    ink_dark_edge = "display-p3:0.03000,0.04200,0.10000,1.00000" # #090D1C KeyStyle Dark Ink
 
     spec = {
         "fill-specializations": [
             {
                 "value": {
                     "linear-gradient": [
-                        "display-p3:0.98500,0.98200,0.96800,1.00000",
-                        "display-p3:0.93000,0.92400,0.90800,1.00000",
+                        "display-p3:1.00000,0.96800,0.87500,1.00000",  # Bright Newsprint (#FFF6DF)
+                        "display-p3:0.99200,0.90200,0.61000,1.00000",  # Sunlit Comic Cream
                     ]
                 }
             },
@@ -201,8 +392,8 @@ def build_app_icon() -> Path:
                 "appearance": "dark",
                 "value": {
                     "linear-gradient": [
-                        "display-p3:0.10500,0.14500,0.31000,1.00000",
-                        "display-p3:0.04200,0.06000,0.14500,1.00000",
+                        "display-p3:0.10500,0.14500,0.34500,1.00000",  # Dark Electric Comic (#10152B)
+                        "display-p3:0.04200,0.05600,0.13500,1.00000",  # Midnight Panel Well (#0A0E1F)
                     ]
                 },
             },
@@ -211,86 +402,139 @@ def build_app_icon() -> Path:
             {
                 "layers": [
                     {
-                        "fill": {"automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"},
+                        "fill-specializations": [
+                            {"value": {"solid": ink_light}},
+                            {"appearance": "dark", "value": {"solid": ink_dark_edge}},
+                        ],
+                        "glass": False,
+                        "image-name": "waves-ink.svg",
+                        "name": "Signal Comic Ink Outlines",
+                        "opacity": 0.94,
+                    },
+                    {
+                        "fill": {"automatic-gradient": "display-p3:0.87500,0.16100,0.12500,1.00000"},
                         "glass": True,
                         "image-name": "emitter-dot.svg",
-                        "name": "Remote Transmitter Dot",
+                        "name": "Remote Emitter Dot",
                     },
                     {
-                        "fill": {"automatic-gradient": "display-p3:1.00000,0.52000,0.12000,1.00000"},
+                        "fill": {"automatic-gradient": "display-p3:1.00000,0.45100,0.08200,1.00000"},
                         "glass": True,
                         "image-name": "rx-wave-1.svg",
-                        "name": "Incoming Wave 1",
+                        "name": "Incoming Wave Inner",
                     },
                     {
-                        "fill": {"automatic-gradient": "display-p3:0.96000,0.23000,0.18000,1.00000"},
+                        "fill": {"automatic-gradient": "display-p3:1.00000,0.82400,0.12200,1.00000"},
                         "glass": True,
                         "image-name": "rx-wave-2.svg",
-                        "name": "Incoming Wave 2",
+                        "name": "Incoming Wave Outer",
                     },
                     {
-                        "fill": {"automatic-gradient": "display-p3:0.16000,0.88000,0.42000,1.00000"},
+                        "fill-specializations": [
+                            {"value": {"solid": ink_light}},
+                            {"appearance": "dark", "value": {"solid": ink_dark_edge}},
+                        ],
+                        "glass": False,
+                        "image-name": "status-led-ink.svg",
+                        "name": "Status LED Ink Ring",
+                    },
+                    {
+                        "fill": {"automatic-gradient": "display-p3:0.16000,0.90000,0.44000,1.00000"},
                         "glass": True,
                         "image-name": "status-led.svg",
                         "name": "Status LED",
                     },
                 ]
-                + tile_layers,
+                + tile_layers
+                + [
+                    {
+                        "fill-specializations": [
+                            {"value": {"solid": ink_light}},
+                            {"appearance": "dark", "value": {"solid": "display-p3:0.03900,0.05500,0.12500,1.00000"}},
+                        ],
+                        "glass": True,
+                        "image-name": "bezel.svg",
+                        "name": "Comic Key-Well Bezel",
+                        "opacity": 0.96,
+                    }
+                ],
                 "shadow": {"kind": "neutral", "opacity": 0.42},
+                "specular": True,
+                "translucency": {"enabled": True, "value": 0.24},
+            },
+            {
+                "layers": [
+                    {
+                        "fill-specializations": [
+                            {"value": {"solid": ink_light}},
+                            {"appearance": "dark", "value": {"solid": ink_dark_edge}},
+                        ],
+                        "glass": False,
+                        "image-name": "barrel-ink.svg",
+                        "name": "Receiver Body Ink Outline",
+                        "opacity": 0.95,
+                    },
+                    {
+                        "fill": {"automatic-gradient": "display-p3:0.10200,0.35700,0.87800,1.00000"},
+                        "glass": True,
+                        "image-name": "barrel.svg",
+                        "name": "USB Receiver Body (Hero Cobalt)",
+                    },
+                ],
+                "shadow": {"kind": "neutral", "opacity": 0.45},
                 "specular": True,
                 "translucency": {"enabled": True, "value": 0.28},
             },
             {
                 "layers": [
                     {
-                        "fill": {"solid": "display-p3:0.06500,0.08500,0.16500,1.00000"},
-                        "glass": True,
-                        "image-name": "bezel.svg",
-                        "name": "Macro Screen Bezel",
-                        "opacity": 0.92,
-                    }
-                ],
-                "shadow": {"kind": "neutral", "opacity": 0.25},
-                "specular": True,
-                "translucency": {"enabled": True, "value": 0.30},
-            },
-            {
-                "layers": [
+                        "fill-specializations": [
+                            {"value": {"solid": ink_light}},
+                            {"appearance": "dark", "value": {"solid": ink_dark_edge}},
+                        ],
+                        "glass": False,
+                        "image-name": "usb-plug-ink.svg",
+                        "name": "USB-A Connector Ink Outline",
+                        "opacity": 0.95,
+                    },
                     {
-                        "fill": {"automatic-gradient": "display-p3:0.10000,0.52000,0.99000,1.00000"},
+                        "fill-specializations": [
+                            {"value": {"automatic-gradient": "display-p3:0.78500,0.83000,0.90000,1.00000"}},
+                            {"appearance": "dark", "value": {"automatic-gradient": "display-p3:0.83000,0.87500,0.95500,1.00000"}},
+                        ],
                         "glass": True,
-                        "image-name": "barrel.svg",
-                        "name": "USB Receiver Body",
-                    }
+                        "image-name": "usb-plug.svg",
+                        "name": "USB-A Connector",
+                    },
                 ],
                 "shadow": {"kind": "neutral", "opacity": 0.48},
                 "specular": True,
-                "translucency": {"enabled": True, "value": 0.45},
+                "translucency": {"enabled": True, "value": 0.20},
             },
             {
                 "layers": [
                     {
                         "fill-specializations": [
-                            {
-                                "value": {
-                                    "automatic-gradient": "display-p3:0.42000,0.48000,0.59000,1.00000"
-                                }
-                            },
-                            {
-                                "appearance": "dark",
-                                "value": {
-                                    "automatic-gradient": "display-p3:0.74000,0.80000,0.90000,1.00000"
-                                },
-                            },
+                            {"value": {"solid": ink_light}},
+                            {"appearance": "dark", "value": {"solid": ink_dark_edge}},
                         ],
-                        "glass": True,
-                        "image-name": "usb-plug.svg",
-                        "name": "USB-A Connector",
-                    }
+                        "glass": False,
+                        "image-name": "comic-drop.svg",
+                        "name": "Hard Offset Comic Block",
+                        "opacity": 0.90,
+                    },
+                    {
+                        "fill-specializations": [
+                            {"value": {"solid": "display-p3:0.08200,0.07500,0.06700,0.08500"}},
+                            {"appearance": "dark", "value": {"solid": "display-p3:0.33700,0.65900,1.00000,0.14000"}},
+                        ],
+                        "glass": False,
+                        "image-name": "halftone.svg",
+                        "name": "Ben-Day Comic Halftone",
+                    },
                 ],
-                "shadow": {"kind": "neutral", "opacity": 0.54},
-                "specular": True,
-                "translucency": {"enabled": True, "value": 0.22},
+                "specular": False,
+                "translucency": {"enabled": False, "value": 0.0},
             },
         ],
         "supported-platforms": {"circles": ["watchOS"], "squares": "shared"},
